@@ -8,7 +8,6 @@ use getrandom::getrandom;
 use siphasher::sip::SipHasher13;
 
 use fastbloom_rs::{BloomFilter, FilterBuilder};
-use fastbloom_rs::Bloom;
 
 #[inline]
 fn sip_new(key: &[u8; 16]) -> SipHasher13 {
@@ -31,11 +30,6 @@ fn bloom_hash<T>(hashes: &mut [u64; 2], item: &T, k_i: u32, sips: &mut [SipHashe
     }
 }
 
-fn bloom_test(bloom: &mut Bloom<String>, inputs: &[String]) {
-    for input in inputs {
-        bloom.set(input);
-    }
-}
 
 fn filter_test(filter: &mut BloomFilter, inputs: &[String]) {
     for input in inputs {
@@ -56,7 +50,6 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut seed = [0u8; 32];
 
     getrandom(&mut seed).unwrap();
-    let mut bloom: Bloom<String> = Bloom::new_with_seed(Bloom::<String>::compute_bitmap_size(items_count, 0.01), items_count, &seed);
     let inputs: Vec<String> = (1..1_000_000).map(|n| { n.to_string() }).collect();
 
     let mut hashes = [0u64; 2];
@@ -87,7 +80,6 @@ fn criterion_benchmark(c: &mut Criterion) {
     // c.bench_function("bloom_hash", |b| b.iter(|| bloom_hash(&mut hashes, &black_box("hellohellohellohello"), black_box(1), &mut sips)));
     c.bench_function("fastmurmur3", |b| b.iter(|| murmur3_x64_128(black_box(b"hellohellohellohello"), 0)));
     c.bench_function("filter_add_test", |b| b.iter(|| filter_add_test(&mut filter, black_box("hellohellohellohello".as_bytes()))));
-    c.bench_function("bloom_add_test", |b| b.iter(|| bloom.set(black_box(&hello))));
     // c.bench_function("fxhash", |b| b.iter(|| {
     //     hello.hash(&mut fxhash);
     //     fxhash.finish();
@@ -95,7 +87,6 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     // c.bench_function("as_test", |b| b.iter(|| as_test(black_box(1000000))));
 
-    c.bench_function("bloom_test", |b| b.iter(|| bloom_test(&mut bloom, &inputs[..])));
     c.bench_function("filter_test", |b| b.iter(|| filter_test(&mut filter, &inputs[..])));
 }
 
