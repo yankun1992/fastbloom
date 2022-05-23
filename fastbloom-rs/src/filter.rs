@@ -64,7 +64,7 @@ impl BloomFilter {
     }
 
     pub fn from_u8_array(array: &[u8], hashes: u32) -> Self {
-        let mut config = FilterBuilder::from_size_and_hashes(bit_vec.len() as u64, hashes);
+        let mut config = FilterBuilder::from_size_and_hashes((array.len() * 8) as u64, hashes);
         config.complete();
         BloomFilter { config, bit_set: BitVec::from_bytes(array) }
     }

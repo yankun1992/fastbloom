@@ -13,3 +13,5 @@ Cargo.lock
 *.iml
 
 *.pyd
+
+__pychche__
