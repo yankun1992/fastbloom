@@ -1,3 +1,20 @@
+[project]
+name = "fastbloom_rs"
+requires-python = ">=3.7"
+license = {file = "LICENSE"}
+authors = [
+    {email = "1939810907@qq.com"},
+    {name = "Yan Kun"}
+]
+maintainers = [
+    {name = "Yan Kun", email = "1939810907@qq.com"}
+]
+
+[project.urls]
+homepage = "https://github.com/yankun1992/fastbloom"
+documentation = "https://github.com/yankun1992/fastbloom/blob/main/README.md"
+repository = "https://github.com/yankun1992/fastbloom"
+
 [build-system]
 requires = ["maturin>=0.12,<0.13"]
 build-backend = "maturin"
