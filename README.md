@@ -1,10 +1,16 @@
-# FastBloom
+# fastbloom
 
 A fast bloom filter implemented by Rust for Python!
 
 ## benchmark
 
 ## Python
+
+### requirements
+
+```
+Python >= 3.7
+```
 
 ### setup
 
@@ -14,7 +20,7 @@ Install the latest fastbloom version with:
 pip install fastbloom_rs
 ```
 
-### Examples
+## Examples
 
 for python
 
