@@ -25,10 +25,11 @@ fn bit_check(bit_set: &BitVec, value: &[u8], m: u128, k: u64) -> bool {
     let hash1 = (murmur3_x64_128(value, 0) % m) as u64;
     let hash2 = (murmur3_x64_128(value, 32) % m) as u64;
     let mut res = *bit_set.index(hash1 as usize);
+    if !res { return false; }
     for i in 1..k {
-        if !res { return false; }
         let mo = ((hash1 + i * hash2) % m as u64) as usize;
         res = res && *bit_set.index(mo);
+        if !res { return false; }
     }
     res
 }
@@ -57,12 +58,33 @@ impl BloomFilter {
         BloomFilter { config, bit_set }
     }
 
+    /// Build a Bloom filter form [BitVec].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    /// use fastbloom_rs::BloomFilter;
+    /// let bit_vec = BitVec::from_elem(32768, false);
+    /// let bloom = BloomFilter::from_bit_vec(&bit_vec, 4);
+    /// ```
     pub fn from_bit_vec(bit_vec: &BitVec, hashes: u32) -> Self {
         let mut config = FilterBuilder::from_size_and_hashes(bit_vec.len() as u64, hashes);
         config.complete();
         BloomFilter { config, bit_set: bit_vec.clone() }
     }
 
+    /// Build a Bloom filter form [BitVec].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    /// use fastbloom_rs::BloomFilter;
+    /// let mut array = Vec::with_capacity(4096);
+    /// unsafe {array.set_len(4096); array.fill(0u8);};
+    /// let bloom = BloomFilter::from_u8_array(array.as_bytes(), 4);
+    /// ```
     pub fn from_u8_array(array: &[u8], hashes: u32) -> Self {
         let mut config = FilterBuilder::from_size_and_hashes((array.len() * 8) as u64, hashes);
         config.complete();
@@ -88,14 +110,17 @@ impl BloomFilter {
         self.config.hashes
     }
 
+    /// Adds the passed value to the filter.
     pub fn add(&mut self, element: &[u8]) {
         bit_set(&mut self.bit_set, element, self.config.size as u128, self.config.hashes as u64);
     }
 
+    /// Removes all elements from the filter (i.e. resets all bits to zero).
     pub fn clear(&mut self) {
         self.bit_set.clear();
     }
 
+    /// Tests whether an element is present in the filter (subject to the specified false positive rate).
     pub fn contains(&self, element: &[u8]) -> bool {
         bit_check(&self.bit_set, element, self.config.size as u128, self.config.hashes as u64)
     }
@@ -108,10 +133,12 @@ impl BloomFilter {
         self.bit_set.set(index, to)
     }
 
+    /// Return the underlying bit vector of the Bloom filter.
     pub fn get_bit_vec(&self) -> BitVec {
         self.bit_set.clone()
     }
 
+    /// Return the underlying byte vector of the Bloom filter.
     pub fn get_u8_array(&self) -> Vec<u8> {
         self.bit_set.to_bytes()
     }
@@ -131,6 +158,10 @@ impl BloomFilter {
         } else { false }
     }
 
+    /// Performs the intersection operation on two compatible bloom filters. This is achieved through a bitwise AND
+    /// operation on their bit vectors. The operations doesn't introduce any false negatives but it does raise the false
+    /// positive probability. The the false positive probability in the resulting Bloom filter is at most the
+    /// false-positive probability in one of the constituent bloom filters
     pub fn intersect(&mut self, other: &BloomFilter) -> bool {
         if self.compatible(other) {
             self.bit_set.and(&other.bit_set);
@@ -138,6 +169,7 @@ impl BloomFilter {
         } else { false }
     }
 
+    /// Returns [true] if the Bloom filter does not contain any elements
     pub fn is_empty(&self) -> bool {
         self.bit_set.is_empty()
     }
@@ -147,6 +179,8 @@ impl BloomFilter {
         self.bit_set = bit_vec
     }
 
+    /// Checks if two Bloom filters are compatible, i.e. have compatible parameters (hash function,
+    /// size, etc.)
     fn compatible(&self, other: &BloomFilter) -> bool {
         self.config.is_compatible_to(&other.config)
     }
