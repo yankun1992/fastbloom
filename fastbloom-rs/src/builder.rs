@@ -4,11 +4,11 @@ use crate::filter::BloomFilter;
 #[derive(Clone)]
 #[derive(Debug)]
 pub struct FilterBuilder {
-    expected_elements: u64,
-    false_positive_probability: f64,
-    pub(crate) size: u64,
-    pub(crate) hashes: u32,
-    done: bool,
+    pub expected_elements: u64,
+    pub false_positive_probability: f64,
+    pub size: u64,
+    pub hashes: u32,
+    pub(crate) done: bool,
 }
 
 pub(crate) const SUFFIX: u64 = 0b0001_1111;
@@ -62,7 +62,7 @@ impl FilterBuilder {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```rust
     /// use fastbloom_rs::FilterBuilder;
     /// let mut builder = FilterBuilder::new(100_000_000, 0.01);
     /// let bloom = builder.build_bloom_filter();
@@ -78,8 +78,8 @@ impl FilterBuilder {
         }
     }
 
-    /// Constructs a new Bloom Filter Builder by specifying the size of the bloom filter in bits and
-    /// the number of hashes. The expected size of the filter and the tolerable false positive
+    /// Constructs a new Bloom Filter Builder by specifying the size of the bloom filter in bits
+    /// and the number of hashes. The expected size of the filter and the tolerable false positive
     /// probability will be inferred from this.
     pub fn from_size_and_hashes(size: u64, hashes: u32) -> Self {
         let n = optimal_n(hashes, size);
@@ -141,11 +141,12 @@ impl FilterBuilder {
 
 #[test]
 fn optimal_test() {
-    let m = optimal_m(216553, 0.01);
-    let k = optimal_k(216553, 2075680);
-    println!("{}", SUFFIX);
-    println!("{m} {k}");
-    assert_eq!(m, 2075680);
+    let m = optimal_m(100_000_000, 0.01);
+    let k = optimal_k(100_000_000, m);
+    let n = optimal_n(k, m);
+    let p = optimal_p(k, m, n);
+    println!("{m} {k} {n} {p}");
+    assert_eq!(m, 958505856);
     assert_eq!(k, 7)
 }
 
