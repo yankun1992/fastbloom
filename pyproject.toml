@@ -1,13 +1,19 @@
 [project]
 name = "fastbloom_rs"
 requires-python = ">=3.7"
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 authors = [
-    {email = "1939810907@qq.com"},
-    {name = "Yan Kun"}
+    { email = "1939810907@qq.com" },
+    { name = "Yan Kun" }
 ]
 maintainers = [
-    {name = "Yan Kun", email = "1939810907@qq.com"}
+    { name = "Yan Kun", email = "1939810907@qq.com" }
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest <= 7.1.1",
+    "pybloom_live"
 ]
 
 [project.urls]
