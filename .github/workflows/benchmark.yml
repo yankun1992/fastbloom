@@ -20,6 +20,12 @@ jobs:
           toolchain: stable
           override: true
       - name: Run benches
-        run: cargo bench --verbose
+        run: cargo bench
       - name: Run tests
-        run: cargo test --all-targets --verbose
+        run: cargo test --all-targets
+      - name: Maturin build
+        uses: messense/maturin-action@v1
+        with:
+          maturin-version: latest
+          command: build
+          args: --release
