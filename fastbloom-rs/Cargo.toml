@@ -2,7 +2,7 @@
 name = "fastbloom-rs"
 version = "0.1.0"
 edition = "2021"
-authors = ["Yan Kun"]
+authors = ["Yan Kun <1939810907@qq.com>"]
 description = "A fast bloom filter implemented by Rust for Python!"
 documentation = "https://github.com/yankun1992/fastbloom"
 readme = "../README.md"
