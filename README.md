@@ -93,7 +93,7 @@ Python >= 3.7
 Install the latest fastbloom version with:
 
 ```bash
-pip install fastbloom_rs
+pip install fastbloom-rs
 ```
 
 ## Examples
