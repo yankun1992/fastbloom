@@ -1,8 +1,5 @@
-use std::any::{Any, TypeId};
-
 use pyo3::prelude::*;
-use pyo3::PyTypeInfo;
-use pyo3::types::{PyBool, PyBytes, PyInt, PyLong, PySequence, PyString};
+use pyo3::types::PyBytes;
 
 use fastbloom_rs::{BloomFilter, FilterBuilder};
 

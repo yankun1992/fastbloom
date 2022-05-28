@@ -1,5 +1,6 @@
 [project]
 name = "fastbloom_rs"
+classifiers = ["Programming Language :: Python"]
 requires-python = ">=3.7"
 license = { file = "LICENSE" }
 authors = [
@@ -24,3 +25,21 @@ repository = "https://github.com/yankun1992/fastbloom"
 [build-system]
 requires = ["maturin>=0.12,<0.13"]
 build-backend = "maturin"
+
+[tool.maturin]
+# Cargo manifest path
+manifest-path = "./Cargo.toml"
+# Include arbitrary files in the sdist
+sdist-include = []
+# Bindings type
+bindings = "pyo3"
+# Control the platform tag on linux
+compatibility = "manylinux2014"
+# Don't check for manylinux compliance
+skip-auditwheel = false
+# Strip the library for minimum file size
+strip = true
+# Extra arguments that will be passed to cargo as `cargo rustc [...] [arg1] [arg2] -- [...]`
+cargo-extra-args = ""
+# Extra arguments that will be passed to rustc as `cargo rustc [...] -- [...] [arg1] [arg2]`
+rustc-extra-args = ""

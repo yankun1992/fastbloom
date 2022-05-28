@@ -7,6 +7,4 @@ edition = "2021"
 
 [dependencies]
 bit-vec = "0.6.3"
-siphasher = "0.3.10"
 fastmurmur3 = "0.1.2"
-smallvec = "1.8.0"

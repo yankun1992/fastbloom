@@ -1,10 +1,7 @@
-use std::mem;
-use std::ops::Index;
 use std::ptr::slice_from_raw_parts;
 
 use bit_vec::BitVec;
 use fastmurmur3::murmur3_x64_128;
-use smallvec::SmallVec;
 
 use crate::builder::FilterBuilder;
 
