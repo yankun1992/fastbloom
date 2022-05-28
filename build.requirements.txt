@@ -7,4 +7,4 @@
 # Tooling
 maturin
 pytest==7.1.1
-pybloom-live=3.1.0
+pybloom-live==3.1.0
