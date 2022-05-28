@@ -29,4 +29,4 @@ jobs:
           target: aarch64-unknown-linux-gnu
           maturin-version: 0.12.7
           command: publish
-          args: --no-sdist -o wheels -i python -u yankun
+          args: --no-sdist --skip-existing -o wheels -i python -u yankun

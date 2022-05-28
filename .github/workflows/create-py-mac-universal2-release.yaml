@@ -36,5 +36,5 @@ jobs:
         with:
           maturin-version: 0.12.7
           command: publish
-          args: --target aarch64-apple-darwin --no-sdist -o wheels -i python -u yankun
+          args: --target aarch64-apple-darwin --no-sdist --skip-existing -o wheels -i python -u yankun
 
