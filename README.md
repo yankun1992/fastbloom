@@ -5,7 +5,7 @@
 [![Test Python](https://github.com/yankun1992/fastbloom/actions/workflows/test_python.yml/badge.svg)](https://github.com/yankun1992/fastbloom/actions/workflows/test_python.yml)
 [![Benchmark](https://github.com/yankun1992/fastbloom/actions/workflows/benchmark.yml/badge.svg)](https://github.com/yankun1992/fastbloom/actions/workflows/benchmark.yml)
 [![Crates Latest Release](https://img.shields.io/crates/v/fastbloom-rs)](https://crates.io/crates/fastbloom-rs)
-[![PyPI Latest Release](https://img.shields.io/pypi/v/fastbloom-rs)](https://pypi.org/project/polars/)
+[![PyPI Latest Release](https://img.shields.io/pypi/v/fastbloom-rs)](https://pypi.org/project/fastbloom-rs/)
 
 A fast bloom filter implemented by Rust for Python!
 
