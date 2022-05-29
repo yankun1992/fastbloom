@@ -1,6 +1,90 @@
 # fastbloom
 
+[![rust docs](https://img.shields.io/badge/docs-passing-brightgreen)](https://docs.rs/fastbloom-rs)
+[![Test Rust](https://github.com/yankun1992/fastbloom/actions/workflows/test_rust.yml/badge.svg)](https://github.com/yankun1992/fastbloom/actions/workflows/test_rust.yml)
+[![Test Python](https://github.com/yankun1992/fastbloom/actions/workflows/test_python.yml/badge.svg)](https://github.com/yankun1992/fastbloom/actions/workflows/test_python.yml)
+[![Benchmark](https://github.com/yankun1992/fastbloom/actions/workflows/benchmark.yml/badge.svg)](https://github.com/yankun1992/fastbloom/actions/workflows/benchmark.yml)
+[![Crates Latest Release](https://img.shields.io/crates/v/fastbloom-rs)](https://crates.io/crates/fastbloom-rs)
+[![PyPI Latest Release](https://img.shields.io/pypi/v/fastbloom-rs)](https://pypi.org/project/polars/)
+
 A fast bloom filter implemented by Rust for Python!
+
+## setup
+
+### Python
+
+#### requirements
+
+```
+Python >= 3.7
+```
+
+#### install
+
+Install the latest fastbloom version with:
+
+```bash
+pip install fastbloom-rs
+```
+
+### Rust
+
+```
+fastbloom-rs = "0.1.2"
+```
+
+## Examples
+
+### Python
+
+basic usage
+
+```python
+from fastbloom_rs import BloomFilter
+
+bloom = BloomFilter(100_000_000, 0.01)
+
+bloom.add_str('hello')
+bloom.add_bytes(b'world')
+bloom.add_int(9527)
+
+assert bloom.contains('hello')
+assert bloom.contains(b'world')
+assert bloom.contains(9527)
+
+assert not bloom.contains('hello world')
+```
+
+build bloom filter from bytes or list
+
+```python
+from fastbloom_rs import BloomFilter
+
+bloom = BloomFilter(100_000_000, 0.01)
+bloom.add_str('hello')
+assert bloom.contains('hello')
+
+bloom2 = BloomFilter.from_bytes(bloom.get_bytes(), bloom.hashes())
+assert bloom2.contains('hello')
+
+bloom3 = BloomFilter.from_int_array(bloom.get_int_array(), bloom.hashes())
+assert bloom3.contains('hello')
+
+```
+
+### Rust
+
+```rust
+use fastbloom_rs::{BloomFilter, FilterBuilder};
+
+let mut bloom = FilterBuilder::new(100_000_000, 0.01).build_bloom_filter();
+
+bloom.add(b"helloworld");
+assert_eq!(bloom.contains(b"helloworld"), true);
+assert_eq!(bloom.contains(b"helloworld!"), false);
+```
+
+more examples at [docs.rs](https://docs.rs/fastbloom-rs)
 
 ## benchmark
 
@@ -157,80 +241,3 @@ Benchmark loop insert `(1..1_000_000).map(|n| { n.to_string() })` to bloom filte
     </div>
   </section>
 </div>
-
-## setup
-
-### Python
-
-#### requirements
-
-```
-Python >= 3.7
-```
-
-#### install
-
-Install the latest fastbloom version with:
-
-```bash
-pip install fastbloom-rs
-```
-
-### Rust
-
-```
-fastbloom-rs = "0.1.1"
-```
-
-## Examples
-
-### Python
-
-basic usage
-
-```python
-from fastbloom_rs import BloomFilter
-
-bloom = BloomFilter(100_000_000, 0.01)
-
-bloom.add_str('hello')
-bloom.add_bytes(b'world')
-bloom.add_int(9527)
-
-assert bloom.contains('hello')
-assert bloom.contains(b'world')
-assert bloom.contains(9527)
-
-assert not bloom.contains('hello world')
-```
-
-build bloom filter from bytes or list
-
-```python
-from fastbloom_rs import BloomFilter
-
-bloom = BloomFilter(100_000_000, 0.01)
-bloom.add_str('hello')
-assert bloom.contains('hello')
-
-bloom2 = BloomFilter.from_bytes(bloom.get_bytes(), bloom.hashes())
-assert bloom2.contains('hello')
-
-bloom3 = BloomFilter.from_int_array(bloom.get_int_array(), bloom.hashes())
-assert bloom3.contains('hello')
-
-```
-
-### Rust
-
-```rust
-use fastbloom_rs::{BloomFilter, FilterBuilder};
-
-let mut bloom = FilterBuilder::new(100_000_000, 0.01).build_bloom_filter();
-
-bloom.add(b"helloworld");
-assert_eq!(bloom.contains(b"helloworld"), true);
-assert_eq!(bloom.contains(b"helloworld!"), false);
-```
-
-more examples at [doc.rs](https://docs.rs/fastbloom-rs/0.1.1)

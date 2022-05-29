@@ -1,10 +1,10 @@
 [package]
 name = "fastbloom-rs"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["Yan Kun <1939810907@qq.com>"]
 description = "A fast bloom filter implemented by Rust for Python!"
-documentation = "https://docs.rs/fastbloom-rs/0.1.1"
+documentation = "https://docs.rs/fastbloom-rs"
 readme = "../README.md"
 homepage = "https://github.com/yankun1992/fastbloom"
 repository = "https://github.com/yankun1992/fastbloom"
