@@ -30,7 +30,7 @@ pip install fastbloom-rs
 ### Rust
 
 ```
-fastbloom-rs = "0.1.2"
+fastbloom-rs = "0.1.3"
 ```
 
 ## Examples
