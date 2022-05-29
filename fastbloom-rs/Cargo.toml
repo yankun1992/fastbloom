@@ -1,16 +1,16 @@
 [package]
 name = "fastbloom-rs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Yan Kun <1939810907@qq.com>"]
 description = "A fast bloom filter implemented by Rust for Python!"
-documentation = "https://github.com/yankun1992/fastbloom"
+documentation = "https://docs.rs/fastbloom-rs/0.1.1"
 readme = "../README.md"
 homepage = "https://github.com/yankun1992/fastbloom"
 repository = "https://github.com/yankun1992/fastbloom"
 license-file = "../LICENSE"
 keywords = ["bloom-filter"]
-categories = ["bloom-filter"]
+categories = ["Algorithms", "Data structures"]
 
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
