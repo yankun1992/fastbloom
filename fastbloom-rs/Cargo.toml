@@ -9,7 +9,8 @@ readme = "../README.md"
 homepage = "https://github.com/yankun1992/fastbloom"
 repository = "https://github.com/yankun1992/fastbloom"
 license-file = "../LICENSE"
-keywords = ["bloom-filter", "bloom", "filter", "bloomfilter", "probabilistic", "structure"]
+keywords = ["bloom-filter", "bloom", "filter", "bloomfilter", "probabilistic",
+    "structure"]
 categories = ["Algorithms", "Data structures"]
 
 
