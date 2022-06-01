@@ -7,7 +7,21 @@
 [![Crates Latest Release](https://img.shields.io/crates/v/fastbloom-rs)](https://crates.io/crates/fastbloom-rs)
 [![PyPI Latest Release](https://img.shields.io/pypi/v/fastbloom-rs)](https://pypi.org/project/fastbloom-rs/)
 
-A fast bloom filter implemented by Rust for Python!
+A fast bloom filter implemented by Rust for Python and Rust!
+
+- [fastbloom](#fastbloom)
+    - [setup](#setup)
+        - [Python](#python)
+            - [requirements](#requirements)
+            - [install](#install)
+        - [Rust](#rust)
+    - [Examples](#examples)
+        - [Python](#python-1)
+        - [Rust](#rust-1)
+    - [benchmark](#benchmark)
+        - [computer info](#computer-info)
+        - [bloom add](#bloom-add)
+        - [bloom add one million](#bloom-add-one-million)
 
 ## setup
 

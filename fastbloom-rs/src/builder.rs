@@ -1,4 +1,4 @@
-use crate::filter::BloomFilter;
+use crate::bloom::BloomFilter;
 
 /// Builder for Bloom Filters.
 #[derive(Clone)]
@@ -11,8 +11,14 @@ pub struct FilterBuilder {
     pub(crate) done: bool,
 }
 
+#[cfg(target_pointer_width = "32")]
 pub(crate) const SUFFIX: u64 = 0b0001_1111;
+#[cfg(target_pointer_width = "64")]
+pub(crate) const SUFFIX: usize = 0b0011_1111;
+#[cfg(target_pointer_width = "32")]
 pub(crate) const MASK: u64 = 0b11111111_11111111_11111111_11111111_11111111_11111111_11111111_11100000;
+#[cfg(target_pointer_width = "64")]
+pub(crate) const MASK: u64 = 0b11111111_11111111_11111111_11111111_11111111_11111111_11111111_11000000;
 
 /// Calculates the optimal size `m` of the bloom filter in bits given `n` (expected
 /// number of elements in bloom filter) and `p` (tolerable false positive rate).
@@ -22,8 +28,8 @@ fn optimal_m(n: u64, p: f64) -> u64 {
     let div = 2f64.ln().powi(2);
     let m: f64 = fact / div;
     let mut m = m.ceil() as u64;
-    if (m & SUFFIX) != 0 {
-        m = (m & MASK) + SUFFIX + 1;
+    if (m & SUFFIX as u64) != 0 {
+        m = (m & MASK) + SUFFIX as u64 + 1;
     };
     m
 }
@@ -108,6 +114,7 @@ impl FilterBuilder {
 
     /// set  the size of the bloom filter in bits.
     fn size(&mut self, size: u64) {
+        assert_eq!(size & SUFFIX as u64, 0);
         self.size = size;
     }
 

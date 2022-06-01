@@ -1,6 +1,9 @@
+extern crate core;
+
 pub use builder::FilterBuilder;
-pub use filter::BloomFilter;
+pub use bloom::BloomFilter;
 
 mod builder;
-mod filter;
+mod bloom;
+mod vec;
 
