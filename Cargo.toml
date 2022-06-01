@@ -9,7 +9,7 @@ readme = "README.md"
 homepage = "https://github.com/yankun1992/fastbloom"
 repository = "https://github.com/yankun1992/fastbloom"
 license-file = "LICENSE"
-keywords = ["bloom-filter", "bloom", "filter", "bloom filter", "probabilistic data structure"]
+keywords = ["bloom-filter", "bloom", "filter", "bloomfilter", "probabilistic data structure"]
 categories = ["bloom-filter"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
