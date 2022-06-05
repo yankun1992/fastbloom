@@ -91,7 +91,7 @@ impl BloomFilter {
         #[cfg(target_pointer_width = "64")]
             let usize_array = slice_from_raw_parts(ptr, (config.size >> 6) as usize);
         #[cfg(target_pointer_width = "32")]
-            let usize_array = slice_from_raw_parts(u8_ptr, (config.size >> 5) as usize);
+            let usize_array = slice_from_raw_parts(ptr, (config.size >> 5) as usize);
 
         bit_vec.storage.copy_from_slice(unsafe { &*usize_array });
 
@@ -120,7 +120,7 @@ impl BloomFilter {
         #[cfg(target_pointer_width = "64")]
             let usize_array = slice_from_raw_parts(ptr, (config.size >> 6) as usize);
         #[cfg(target_pointer_width = "32")]
-            let usize_array = slice_from_raw_parts(u8_ptr, (config.size >> 5) as usize);
+            let usize_array = slice_from_raw_parts(ptr, (config.size >> 5) as usize);
 
         bit_vec.storage.copy_from_slice(unsafe { &*usize_array });
 
@@ -150,7 +150,7 @@ impl BloomFilter {
         #[cfg(target_pointer_width = "64")]
             let usize_array = slice_from_raw_parts(ptr, (config.size >> 6) as usize);
         #[cfg(target_pointer_width = "32")]
-            let usize_array = slice_from_raw_parts(u8_ptr, (config.size >> 5) as usize);
+            let usize_array = slice_from_raw_parts(ptr, (config.size >> 5) as usize);
 
         bit_vec.storage.copy_from_slice(unsafe { &*usize_array });
 
@@ -179,7 +179,7 @@ impl BloomFilter {
         #[cfg(target_pointer_width = "64")]
             let usize_array = slice_from_raw_parts(ptr, (config.size >> 6) as usize);
         #[cfg(target_pointer_width = "32")]
-            let usize_array = slice_from_raw_parts(u8_ptr, (config.size >> 5) as usize);
+            let usize_array = slice_from_raw_parts(ptr, (config.size >> 5) as usize);
 
         bit_vec.storage.copy_from_slice(unsafe { &*usize_array });
 
