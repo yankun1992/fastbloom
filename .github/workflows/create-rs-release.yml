@@ -20,9 +20,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - name: to workdir
-        run: cd fastbloom-rs
       - name: package
-        run: cargo package
+        run: cargo package --manifest-path fastbloom-rs/Cargo.toml
       - name: publish
-        run: cargo publish
+        run: cargo publish --manifest-path fastbloom-rs/Cargo.toml
