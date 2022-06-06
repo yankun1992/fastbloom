@@ -7,28 +7,29 @@
 [![Crates Latest Release](https://img.shields.io/crates/v/fastbloom-rs)](https://crates.io/crates/fastbloom-rs)
 [![PyPI Latest Release](https://img.shields.io/pypi/v/fastbloom-rs)](https://pypi.org/project/fastbloom-rs/)
 
-A fast [bloom filter](#BloomFilter) | [counting bloom filter](#countingbloomfilter) implemented by Rust for Rust and Python!
+A fast [bloom filter](#BloomFilter) | [counting bloom filter](#countingbloomfilter) implemented by Rust for Rust and
+Python!
 
 - [setup](#setup)
-  - [Python](#python)
-    - [requirements](#requirements)
-    - [install](#install)
-  - [Rust](#rust)
+    - [Python](#python)
+        - [requirements](#requirements)
+        - [install](#install)
+    - [Rust](#rust)
 - [Examples](#examples)
-  - [BloomFilter](#bloomfilter)
-    - [Python](#python-1)
-    - [Rust](#rust-1)
-  - [CountingBloomFilter](#countingbloomfilter)
-    - [Python](#python-2)
-    - [Rust](#rust-2)
+    - [BloomFilter](#bloomfilter)
+        - [Python](#python-1)
+        - [Rust](#rust-1)
+    - [CountingBloomFilter](#countingbloomfilter)
+        - [Python](#python-2)
+        - [Rust](#rust-2)
 - [benchmark](#benchmark)
-  - [computer info](#computer-info)
-  - [add one str to bloom filter](#add-one-str-to-bloom-filter)
-  - [add one million to bloom filter](#add-one-million-to-bloom-filter)
-  - [check one contains in bloom filter](#check-one-contains-in-bloom-filter)
-  - [check one not contains in bloom filter](#check-one-not-contains-in-bloom-filter)
-  - [add one str to counting bloom filter](#add-one-str-to-counting-bloom-filter)
-  - [add one million to counting bloom filter](#add-one-million-to-counting-bloom-filter)
+    - [computer info](#computer-info)
+    - [add one str to bloom filter](#add-one-str-to-bloom-filter)
+    - [add one million to bloom filter](#add-one-million-to-bloom-filter)
+    - [check one contains in bloom filter](#check-one-contains-in-bloom-filter)
+    - [check one not contains in bloom filter](#check-one-not-contains-in-bloom-filter)
+    - [add one str to counting bloom filter](#add-one-str-to-counting-bloom-filter)
+    - [add one million to counting bloom filter](#add-one-million-to-counting-bloom-filter)
 
 # setup
 
@@ -103,7 +104,7 @@ assert bloom3.contains('hello')
 
 ```
 
-more examples at [test_bloom](py_tests/test_bloom.py).
+more examples at [py_tests](py_tests/test_bloom.py).
 
 ### Rust
 
@@ -160,6 +161,8 @@ assert 'hello' in cbf
 cbf.remove('hello')
 assert 'hello' not in cbf 
 ```
+
+more examples at [py_tests](py_tests/test_counting_bloom_filter.py).
 
 ### Rust
 
