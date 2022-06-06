@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from . import *
-from .fastbloom_rs import PyFilterBuilder, PyBloomFilter
-from .filter import BloomFilter, FilterBuilder
+from .fastbloom_rs import PyFilterBuilder, PyBloomFilter, PyCountingBloomFilter
+from .filter import BloomFilter, FilterBuilder, CountingBloomFilter
 
-__all__ = ["filter", "BloomFilter", "FilterBuilder", "PyBloomFilter"]
+__all__ = ["filter", "BloomFilter", "FilterBuilder", "PyBloomFilter", "PyCountingBloomFilter", "CountingBloomFilter"]

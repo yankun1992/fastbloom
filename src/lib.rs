@@ -1,6 +1,6 @@
 use pyo3::prelude::*;
 
-use crate::pybloom::{PyBloomFilter, PyFilterBuilder};
+use crate::pybloom::{PyBloomFilter, PyFilterBuilder, PyCountingBloomFilter};
 
 pub mod pybloom;
 
@@ -8,6 +8,7 @@ pub mod pybloom;
 fn fastbloom_rs(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyBloomFilter>().unwrap();
     m.add_class::<PyFilterBuilder>().unwrap();
+    m.add_class::<PyCountingBloomFilter>().unwrap();
     Ok(())
 }
 

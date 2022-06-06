@@ -1,4 +1,5 @@
-use crate::bloom::BloomFilter;
+use crate::bloom::{BloomFilter, CountingBloomFilter};
+use crate::Membership;
 
 /// Builder for Bloom Filters.
 #[derive(Clone)]
@@ -8,6 +9,8 @@ pub struct FilterBuilder {
     pub false_positive_probability: f64,
     pub size: u64,
     pub hashes: u32,
+    /// Usage for CountingBloomFilter.
+    pub enable_repeat_insert: bool,
     pub(crate) done: bool,
 }
 
@@ -80,6 +83,7 @@ impl FilterBuilder {
             false_positive_probability,
             size: 0,
             hashes: 0,
+            enable_repeat_insert: true,
             done: false,
         }
     }
@@ -95,6 +99,7 @@ impl FilterBuilder {
             false_positive_probability: p,
             size,
             hashes,
+            enable_repeat_insert: true,
             done: true,
         }
     }
@@ -110,6 +115,37 @@ impl FilterBuilder {
         assert!(false_positive_probability < 1.0 && false_positive_probability > 0.0,
                 "false_positive_probability must between (0.0, 1.0)!");
         self.false_positive_probability = false_positive_probability;
+    }
+
+    /// Use for CountingBloomFilter.
+    ///
+    /// # Example:
+    /// ```rust
+    /// use fastbloom_rs::{Deletable, FilterBuilder, Membership};
+    ///
+    /// let mut builder = FilterBuilder::new(100_000, 0.01);
+    /// // enable_repeat_insert is true
+    /// builder.enable_repeat_insert(true);
+    /// let mut cbf = builder.build_counting_bloom_filter();
+    /// cbf.add(b"hello"); // modify underlying vector counter.
+    /// cbf.add(b"hello"); // modify underlying vector counter.
+    /// assert_eq!(cbf.contains(b"hello"), true);
+    /// cbf.remove(b"hello");
+    /// assert_eq!(cbf.contains(b"hello"), true);
+    /// cbf.remove(b"hello");
+    /// assert_eq!(cbf.contains(b"hello"), false);
+    ///
+    /// // enable_repeat_insert is false
+    /// builder.enable_repeat_insert(false);
+    /// let mut cbf = builder.build_counting_bloom_filter();
+    /// cbf.add(b"hello"); // modify underlying vector counter.
+    /// cbf.add(b"hello"); // not modify underlying vector counter because b"hello" has been added.
+    /// assert_eq!(cbf.contains(b"hello"), true);
+    /// cbf.remove(b"hello");
+    /// assert_eq!(cbf.contains(b"hello"), false);
+    /// ```
+    pub fn enable_repeat_insert(&mut self, enable: bool) {
+        self.enable_repeat_insert = enable;
     }
 
     /// set  the size of the bloom filter in bits.
@@ -137,6 +173,13 @@ impl FilterBuilder {
     pub fn build_bloom_filter(&mut self) -> BloomFilter {
         self.complete();
         BloomFilter::new(self.clone())
+    }
+
+    /// Constructs a Counting Bloom filter using the specified parameters and computing missing parameters
+    /// if possible (e.g. the optimal Bloom filter bit size).
+    pub fn build_counting_bloom_filter(&mut self) -> CountingBloomFilter {
+        self.complete();
+        CountingBloomFilter::new(self.clone())
     }
 
     /// Checks whether a configuration is compatible to another configuration based on the size of

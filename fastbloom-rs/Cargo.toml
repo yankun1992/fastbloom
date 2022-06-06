@@ -1,15 +1,15 @@
 [package]
 name = "fastbloom-rs"
-version = "0.2.2"
+version = "0.3.0"
 edition = "2021"
 authors = ["Yan Kun <1939810907@qq.com>"]
-description = "A fast bloom filter implemented by Rust for Python and Rust!"
+description = "Some fast bloom filter implemented by Rust for Python and Rust!"
 documentation = "https://docs.rs/fastbloom-rs"
 readme = "../README.md"
 homepage = "https://github.com/yankun1992/fastbloom"
 repository = "https://github.com/yankun1992/fastbloom"
 license-file = "../LICENSE"
-keywords = ["bloom-filter", "bloom", "filter", "bloomfilter", "probabilistic"]
+keywords = ["bloom-filter", "bloom", "filter", "bloomfilter", "counting-bloom-filter"]
 categories = ["algorithms", "data-structures"]
 
 

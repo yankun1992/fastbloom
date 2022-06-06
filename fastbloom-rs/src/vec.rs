@@ -105,6 +105,96 @@ impl BloomBitVec {
     }
 }
 
+/// counter vector for counting bloom filter.
+#[derive(Debug)]
+#[derive(Clone)]
+pub(crate) struct CountingVec {
+    /// Internal representation of the vector
+    pub(crate) storage: Vec<usize>,
+    /// The number of valid counter in the internal representation
+    pub(crate) counters: u64,
+    /// The number of valid counter in a slot which mean usize.
+    pub(crate) counter_per_slot: usize,
+}
+
+impl CountingVec {
+    /// create a CountingVec
+    pub fn new(slots: usize) -> Self {
+        let counter_per_slot = get_usize_len() >> 2;
+        CountingVec {
+            storage: vec![0; slots],
+            counters: (slots * counter_per_slot) as u64,
+            counter_per_slot,
+        }
+    }
+
+    #[inline]
+    pub fn increment(&mut self, index: usize) {
+        let current = self.get(index);
+        #[cfg(target_pointer_width = "64")]
+        if current != 0b1111 {
+            let current = current + 1;
+            let w = index >> 4;
+            let b = index & 0b1111;
+            let move_bits = (15 - b) * 4;
+            self.storage[w] =
+                (self.storage[w] & !(0b1111 << move_bits)) | (current << move_bits)
+        }
+
+        #[cfg(target_pointer_width = "32")]
+        if current != 0b111 {
+            let current = current + 1;
+            let w = index >> 3;
+            let b = index & 0b111;
+            let move_bits = (7 - b) * 4;
+            self.storage[w] =
+                (self.storage[w] & !(0b1111 << move_bits)) | (current << move_bits)
+        }
+    }
+
+    #[inline]
+    pub fn decrement(&mut self, index: usize) {
+        let current = self.get(index);
+        if current > 0 {
+            if cfg!(target_pointer_width="64") {
+                let current = current - 1;
+                let w = index >> 4;
+                let b = index & 0b1111;
+                let move_bits = (15 - b) * 4;
+                self.storage[w] =
+                    (self.storage[w] & !(0b1111 << move_bits)) | (current << move_bits)
+            } else if cfg!(target_pointer_width="32") {
+                let current = current - 1;
+                let w = index >> 3;
+                let b = index & 0b111;
+                let move_bits = (7 - b) * 4;
+                self.storage[w] =
+                    (self.storage[w] & !(0b1111 << move_bits)) | (current << move_bits)
+            }
+        }
+    }
+
+    #[inline]
+    pub fn get(&self, index: usize) -> usize {
+        #[cfg(target_pointer_width = "64")]
+            let w = index >> 4;
+        #[cfg(target_pointer_width = "64")]
+            let b = index & 0b1111;
+        #[cfg(target_pointer_width = "32")]
+            let w = index >> 3;
+        #[cfg(target_pointer_width = "32")]
+            let b = index & 0b111;
+        let slot = self.storage[w];
+        #[cfg(target_pointer_width = "64")]
+        return (slot >> ((15 - b) * 4)) & 0b1111;
+        #[cfg(target_pointer_width = "32")]
+        return (slot >> ((7 - b) * 4)) & 0b111;
+    }
+
+    pub fn clear(&mut self) {
+        self.storage.fill(0);
+    }
+}
 
 #[test]
 fn test_vec() {
@@ -123,4 +213,12 @@ fn test_size() {
     assert_eq!(get_usize_len(), 64);
     #[cfg(target_pointer_width = "32")]
     assert_eq!(get_usize_len(), 32);
+}
+
+#[test]
+fn test_count_vec() {
+    let mut vec = CountingVec::new(10);
+    vec.increment(7);
+
+    assert_eq!(1, vec.get(7))
 }

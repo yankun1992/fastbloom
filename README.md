@@ -1,13 +1,13 @@
-# fastbloom
+<h1>fastbloom</h1>
 
-[![rust docs](https://img.shields.io/badge/docs-passing-brightgreen)](https://docs.rs/fastbloom-rs)
+[![docs.rs](https://img.shields.io/docsrs/fastbloom-rs/latest)](https://docs.rs/fastbloom-rs)
 [![Test Rust](https://github.com/yankun1992/fastbloom/actions/workflows/test_rust.yml/badge.svg)](https://github.com/yankun1992/fastbloom/actions/workflows/test_rust.yml)
 [![Test Python](https://github.com/yankun1992/fastbloom/actions/workflows/test_python.yml/badge.svg)](https://github.com/yankun1992/fastbloom/actions/workflows/test_python.yml)
 [![Benchmark](https://github.com/yankun1992/fastbloom/actions/workflows/benchmark.yml/badge.svg)](https://github.com/yankun1992/fastbloom/actions/workflows/benchmark.yml)
 [![Crates Latest Release](https://img.shields.io/crates/v/fastbloom-rs)](https://crates.io/crates/fastbloom-rs)
 [![PyPI Latest Release](https://img.shields.io/pypi/v/fastbloom-rs)](https://pypi.org/project/fastbloom-rs/)
 
-A fast bloom filter implemented by Rust for Python and Rust!
+A fast [bloom filter](#BloomFilter) implemented by Rust for Rust and Python!
 
 - [fastbloom](#fastbloom)
     - [setup](#setup)
@@ -23,17 +23,17 @@ A fast bloom filter implemented by Rust for Python and Rust!
         - [bloom add](#bloom-add)
         - [bloom add one million](#bloom-add-one-million)
 
-## setup
+# setup
 
-### Python
+## Python
 
-#### requirements
+### requirements
 
 ```
 Python >= 3.7
 ```
 
-#### install
+### install
 
 Install the latest fastbloom version with:
 
@@ -41,13 +41,23 @@ Install the latest fastbloom version with:
 pip install fastbloom-rs
 ```
 
-### Rust
+## Rust
 
 ```toml
-fastbloom-rs = "0.2.1"
+fastbloom-rs = "{latest}"
 ```
 
-## Examples
+# Examples
+
+## BloomFilter
+
+A Bloom filter is a space-efficient probabilistic data structure, conceived by Burton Howard
+Bloom in 1970, that is used to test whether an element is a member of a set. False positive
+matches are possible, but false negatives are not.
+
+**Reference**: Bloom, B. H. (1970). Space/time trade-offs in hash coding with allowable errors.
+Communications of the ACM, 13(7), 422-426.
+[Full text article](http://crystal.uta.edu/~mcguigan/cse6350/papers/Bloom.pdf)
 
 ### Python
 
@@ -86,6 +96,8 @@ assert bloom3.contains('hello')
 
 ```
 
+more examples at [test_bloom](py_tests/test_bloom.py).
+
 ### Rust
 
 ```rust
@@ -100,158 +112,137 @@ assert_eq!(bloom.contains(b"helloworld!"), false);
 
 more examples at [docs.rs](https://docs.rs/fastbloom-rs)
 
-## benchmark
+## CountingBloomFilter
 
-### computer info
+A Counting Bloom filter works in a similar manner as a regular Bloom filter; however, it is
+able to keep track of insertions and deletions. In a counting Bloom filter, each entry in the
+Bloom filter is a small counter associated with a basic Bloom filter bit.
+
+**Reference**: F. Bonomi, M. Mitzenmacher, R. Panigrahy, S. Singh, and G. Varghese, “An Improved
+Construction for Counting Bloom Filters,” in 14th Annual European Symposium on
+Algorithms, LNCS 4168, 2006
+
+### Python
+
+```python
+from fastbloom_rs import CountingBloomFilter
+
+cbf = CountingBloomFilter(1000_000, 0.01)
+cbf.add('hello')
+cbf.add('hello')
+assert 'hello' in cbf
+cbf.remove('hello')
+assert 'hello' in cbf  # because 'hello' added twice. 
+# If add same element larger than 15 times, then remove 15 times the filter will not contain the element.
+cbf.remove('hello')
+assert 'hello' not in cbf
+```
+
+A CountingBloomFilter has a four bits counter to save hash index, so when insert an
+element repeatedly, the counter will spill over quickly. So, you can set
+`enable_repeat_insert` to `False` to check whether the element has added.
+if it has added, it will not add again. `enable_repeat_insert` default set to `True`.
+
+```python
+from fastbloom_rs import CountingBloomFilter
+
+cbf = CountingBloomFilter(1000_000, 0.01, False)
+cbf.add('hello')
+cbf.add('hello')  # because enable_repeat_insert=False, this addition will not take effect. 
+assert 'hello' in cbf
+cbf.remove('hello')
+assert 'hello' not in cbf 
+```
+
+### Rust
+
+```rust
+use fastbloom_rs::{CountingBloomFilter, FilterBuilder};
+
+let mut builder = FilterBuilder::new(100_000, 0.01);
+let mut cbf = builder.build_counting_bloom_filter();
+cbf.add(b"helloworld");
+assert_eq!(bloom.contains(b"helloworld"), true);
+```
+
+# benchmark
+
+## computer info
 
 | CPU                                    | Memory | OS         |
 |----------------------------------------|--------|------------|
 | AMD Ryzen 7 5800U with Radeon Graphics | 16G    | Windows 10 |
 
-### bloom add
+## add one str to bloom filter
 
-Benchmark insert str to bloom filter:
-<div>
-  <section class="plots">
-    <table width="100%">
-      <tbody>
-        <tr>
-          <td>
-            <a href="./docs/img/bloom_add_test/pdf.svg">
-              <img src="./docs/img/bloom_add_test/pdf_small.svg" alt="PDF of Slope" width="450" height="300" />
-            </a>
-          </td>
-          <td>
-            <a href="./docs/img/bloom_add_test/regression.svg">
-              <img src="./docs/img/bloom_add_test/regression_small.svg" alt="Regression" width="450" height="300" />
-            </a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
-  <section class="stats">
-    <div class="additional_stats">
-      <h4>Additional Statistics:</h4>
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            <th title="0.95 confidence level" class="ci-bound">Lower bound</th>
-            <th>Estimate</th>
-            <th title="0.95 confidence level" class="ci-bound">Upper bound</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Slope</td>
-            <td class="ci-bound">41.095 ns</td>
-            <td>41.146 ns</td>
-            <td class="ci-bound">41.203 ns</td>
-          </tr>
-          <tr>
-            <td>R&#xb2;</td>
-            <td class="ci-bound">0.9959495</td>
-            <td>0.9961648</td>
-            <td class="ci-bound">0.9959083</td>
-          </tr>
-          <tr>
-            <td>Mean</td>
-            <td class="ci-bound">41.157 ns</td>
-            <td>41.207 ns</td>
-            <td class="ci-bound">41.257 ns</td>
-          </tr>
-          <tr>
-            <td title="Standard Deviation">Std. Dev.</td>
-            <td class="ci-bound">226.07 ps</td>
-            <td>261.59 ps</td>
-            <td class="ci-bound">294.01 ps</td>
-          </tr>
-          <tr>
-            <td>Median</td>
-            <td class="ci-bound">41.132 ns</td>
-            <td>41.184 ns</td>
-            <td class="ci-bound">41.247 ns</td>
-          </tr>
-          <tr>
-            <td title="Median Absolute Deviation">MAD</td>
-            <td class="ci-bound">201.13 ps</td>
-            <td>277.13 ps</td>
-            <td class="ci-bound">335.05 ps</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-</div>
+Benchmark insert one str to bloom filter:
 
-### bloom add one million
+```text
+bloom_add_test          time:   [41.168 ns 41.199 ns 41.233 ns]
+                        change: [-0.4891% -0.0259% +0.3417%] (p = 0.91 > 0.05)
+                        No change in performance detected.
+Found 13 outliers among 100 measurements (13.00%)
+  1 (1.00%) high mild
+  12 (12.00%) high severe
+```
+
+## add one million to bloom filter
 
 Benchmark loop insert `(1..1_000_000).map(|n| { n.to_string() })` to bloom filter:
-<div>
-  <section class="plots">
-    <table width="100%">
-      <tbody>
-        <tr>
-          <td>
-            <a href="./docs/img/bloom_add_all_test/pdf.svg">
-              <img src="./docs/img/bloom_add_all_test/pdf_small.svg" alt="PDF of Slope" width="450" height="300" />
-            </a>
-          </td>
-          <td>
-            <a href="./docs/img/bloom_add_all_test/iteration_times.svg">
-              <img src="./docs/img/bloom_add_all_test/iteration_times_small.svg" alt="Regression" width="450" height="300" />
-            </a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
-  <section class="stats">
-    <div class="additional_stats">
-      <h4>Additional Statistics:</h4>
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            <th title="0.95 confidence level" class="ci-bound">Lower bound</th>
-            <th>Estimate</th>
-            <th title="0.95 confidence level" class="ci-bound">Upper bound</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>R&#xb2;</td>
-            <td class="ci-bound">0.0002895</td>
-            <td>0.0002964</td>
-            <td class="ci-bound">0.0002822</td>
-          </tr>
-          <tr>
-            <td>Mean</td>
-            <td class="ci-bound">237.57 ms</td>
-            <td>240.25 ms</td>
-            <td class="ci-bound">244.15 ms</td>
-          </tr>
-          <tr>
-            <td title="Standard Deviation">Std. Dev.</td>
-            <td class="ci-bound">2.4341 ms</td>
-            <td>17.400 ms</td>
-            <td class="ci-bound">28.072 ms</td>
-          </tr>
-          <tr>
-            <td>Median</td>
-            <td class="ci-bound">236.83 ms</td>
-            <td>237.27 ms</td>
-            <td class="ci-bound">237.75 ms</td>
-          </tr>
-          <tr>
-            <td title="Median Absolute Deviation">MAD</td>
-            <td class="ci-bound">1.5867 ms</td>
-            <td>2.2701 ms</td>
-            <td class="ci-bound">2.8268 ms</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-</div>
+
+```text
+bloom_add_all_test      time:   [236.24 ms 236.86 ms 237.55 ms]
+                        change: [-3.4346% -2.9050% -2.3524%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 5 outliers among 100 measurements (5.00%)
+  4 (4.00%) high mild
+  1 (1.00%) high severe
+```
+
+## check one contains in bloom filter
+
+```text
+bloom_contains_test     time:   [42.065 ns 42.102 ns 42.156 ns]
+                        change: [-0.7830% -0.5901% -0.4029%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 15 outliers among 100 measurements (15.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+  9 (9.00%) high severe
+```
+
+## check one not contains in bloom filter
+
+```text
+bloom_not_contains_test time:   [22.695 ns 22.727 ns 22.773 ns]
+                        change: [-3.1948% -2.9695% -2.7268%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 12 outliers among 100 measurements (12.00%)
+  4 (4.00%) high mild
+  8 (8.00%) high severe
+```
+
+## add one str to counting bloom filter
+
+```text
+counting_bloom_add_test time:   [60.822 ns 60.861 ns 60.912 ns]
+                        change: [+0.2427% +0.3772% +0.5579%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 10 outliers among 100 measurements (10.00%)
+  1 (1.00%) low severe
+  4 (4.00%) low mild
+  1 (1.00%) high mild
+  4 (4.00%) high severe
+```
+
+## add one million to counting bloom filter
+
+Benchmark loop insert `(1..1_000_000).map(|n| { n.to_string() })` to counting bloom filter:
+
+```text
+counting_bloom_add_million_test
+                        time:   [272.48 ms 272.58 ms 272.68 ms]
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+```

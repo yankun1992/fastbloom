@@ -33,8 +33,6 @@ manifest-path = "./Cargo.toml"
 sdist-include = []
 # Bindings type
 bindings = "pyo3"
-# Control the platform tag on linux
-#compatibility = "manylinux2014"
 # Don't check for manylinux compliance
 skip-auditwheel = false
 # Strip the library for minimum file size

@@ -7,7 +7,7 @@ use fxhash::{FxHasher64, hash64};
 use getrandom::getrandom;
 use siphasher::sip::SipHasher13;
 
-use fastbloom_rs::{BloomFilter, FilterBuilder};
+use fastbloom_rs::{BloomFilter, CountingBloomFilter, Deletable, FilterBuilder, Hashes, Membership};
 
 #[inline]
 fn sip_new(key: &[u8; 16]) -> SipHasher13 {
@@ -93,5 +93,19 @@ fn bloom_add_bench(c: &mut Criterion) {
     c.bench_function("bloom_not_contains_test", |b| b.iter(|| filter.contains(black_box(b"hellohellohello"))));
 }
 
-criterion_group!(benches, bloom_add_bench, hash_bench);
+fn counting_bloom_add_bench(c: &mut Criterion) {
+    let inputs: Vec<String> = (1..1_000_000).map(|n| { n.to_string() }).collect();
+    let items_count = 100_000_000;
+
+    let hello = "hellohellohellohello".to_string();
+
+    let mut filter = FilterBuilder::new(items_count as u64, 0.001).build_counting_bloom_filter();
+
+    c.bench_function("counting_bloom_add_test", |b| b.iter(|| filter.add(black_box(hello.as_bytes()))));
+    c.bench_function("counting_bloom_add_million_test", |b| b.iter(|| for input in inputs.iter() {
+        filter.add(input.as_bytes());
+    }));
+}
+
+criterion_group!(benches, bloom_add_bench, counting_bloom_add_bench);
 criterion_main!(benches);

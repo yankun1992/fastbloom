@@ -3,8 +3,9 @@ use std::ptr::slice_from_raw_parts;
 
 use fastmurmur3::murmur3_x64_128;
 
+use crate::{Deletable, Hashes, Membership};
 use crate::builder::FilterBuilder;
-use crate::vec::BloomBitVec;
+use crate::vec::{BloomBitVec, CountingVec};
 
 #[inline]
 fn bit_set(bit_set: &mut BloomBitVec, value: &[u8], m: u128, k: u64) {
@@ -47,6 +48,34 @@ fn bit_check(bit_set: &BloomBitVec, value: &[u8], m: u128, k: u64) -> bool {
 pub struct BloomFilter {
     config: FilterBuilder,
     bit_set: BloomBitVec,
+}
+
+impl Membership for BloomFilter {
+    /// Adds the passed value to the filter.
+    fn add(&mut self, element: &[u8]) {
+        bit_set(&mut self.bit_set, element, self.config.size as u128,
+                self.config.hashes as u64);
+    }
+
+    /// Tests whether an element is present in the filter (subject to the specified false
+    /// positive rate).
+    #[inline]
+    fn contains(&self, element: &[u8]) -> bool {
+        bit_check(&self.bit_set, element, self.config.size as u128,
+                  self.config.hashes as u64)
+    }
+
+    /// Removes all elements from the filter (i.e. resets all bits to zero).
+    fn clear(&mut self) {
+        self.bit_set.clear();
+    }
+}
+
+impl Hashes for BloomFilter {
+    ///  Returns the hash function number of the Bloom filter.
+    fn hashes(&self) -> u32 {
+        self.config.hashes
+    }
 }
 
 impl BloomFilter {
@@ -200,30 +229,6 @@ impl BloomFilter {
         self.config.clone()
     }
 
-    ///  Returns the hash function number of the Bloom filter.
-    pub fn hashes(&self) -> u32 {
-        self.config.hashes
-    }
-
-    /// Adds the passed value to the filter.
-    pub fn add(&mut self, element: &[u8]) {
-        bit_set(&mut self.bit_set, element, self.config.size as u128,
-                self.config.hashes as u64);
-    }
-
-    /// Removes all elements from the filter (i.e. resets all bits to zero).
-    pub fn clear(&mut self) {
-        self.bit_set.clear();
-    }
-
-    /// Tests whether an element is present in the filter (subject to the specified false
-    /// positive rate).
-    #[inline]
-    pub fn contains(&self, element: &[u8]) -> bool {
-        bit_check(&self.bit_set, element, self.config.size as u128,
-                  self.config.hashes as u64)
-    }
-
     /// Return the underlying byte vector of the Bloom filter.
     pub fn get_u8_array(&self) -> &[u8] {
         let storage = &self.bit_set.storage;
@@ -316,6 +321,243 @@ impl BloomFilter {
     }
 }
 
+/// A Counting Bloom filter works in a similar manner as a regular Bloom filter; however, it is
+/// able to keep track of insertions and deletions. In a counting Bloom filter, each entry in the
+/// Bloom filter is a small counter associated with a basic Bloom filter bit.
+///
+/// **Reference**: F. Bonomi, M. Mitzenmacher, R. Panigrahy, S. Singh, and G. Varghese, “An Improved
+/// Construction for Counting Bloom Filters,” in 14th Annual European Symposium on
+/// Algorithms, LNCS 4168, 2006
+#[derive(Clone)]
+#[derive(Debug)]
+pub struct CountingBloomFilter {
+    config: FilterBuilder,
+    counting_vec: CountingVec,
+}
+
+macro_rules! get_array {
+    ($name:ident, $native:ty, $len:expr) => {
+        impl CountingBloomFilter {
+            pub fn $name(&self) -> &[$native] {
+                let ptr = self.counting_vec.storage.as_ptr() as *const $native;
+                #[cfg(target_pointer_width = "64")]
+                    let arr = slice_from_raw_parts(ptr, self.counting_vec.storage.len() * $len);
+                #[cfg(target_pointer_width = "32")]
+                    let arr = slice_from_raw_parts(ptr, self.counting_vec.storage.len() * $len / 2);
+                unsafe { &*arr }
+            }
+        }
+    };
+}
+
+get_array!(get_u8_array, u8, 8);
+get_array!(get_u16_array, u16, 4);
+get_array!(get_u32_array, u32, 2);
+get_array!(get_u64_array, u64, 1);
+
+impl CountingBloomFilter {
+    pub fn new(mut config: FilterBuilder) -> Self {
+        config.complete();
+        #[cfg(target_pointer_width = "64")]
+            let counting_vec = CountingVec::new((config.size >> 4) as usize);
+        #[cfg(target_pointer_width = "32")]
+            let counting_vec = CountingVec::new((config.size >> 3) as usize);
+        CountingBloomFilter { config, counting_vec }
+    }
+
+    pub(crate) fn set_counting_vec(&mut self, counting_vec: CountingVec) {
+        assert_eq!(self.config.size, counting_vec.counters as u64);
+        self.counting_vec = counting_vec
+    }
+
+    /// Checks if two Counting Bloom filters are compatible, i.e. have compatible parameters (hash
+    /// function, size, etc.)
+    fn compatible(&self, other: &BloomFilter) -> bool {
+        self.config.is_compatible_to(&other.config)
+    }
+
+    /// Returns the configuration/builder of the Bloom filter.
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fastbloom_rs::{BloomFilter, FilterBuilder};
+    ///
+    /// let bloom = FilterBuilder::new(100_000_000, 0.01).build_bloom_filter();
+    /// let builder = bloom.config();
+    /// ```
+    ///
+    pub fn config(&self) -> FilterBuilder {
+        self.config.clone()
+    }
+}
+
+macro_rules! from_array {
+    ($name:ident, $native:ty, $num:expr) => {
+        impl CountingBloomFilter {
+            pub fn $name(array: &[$native], hashes: u32, enable_repeat_insert:bool) -> Self {
+                let mut config =
+                    FilterBuilder::from_size_and_hashes((array.len() * $num) as u64, hashes);
+                config.enable_repeat_insert(enable_repeat_insert);
+                config.complete();
+                #[cfg(target_pointer_width = "64")]
+                    let mut counting_vec = CountingVec::new((config.size >> 4) as usize);
+                #[cfg(target_pointer_width = "32")]
+                    let mut counting_vec = CountingVec::new((config.size >> 3) as usize);
+
+                let ptr = array.as_ptr() as *const usize;
+                #[cfg(target_pointer_width = "64")]
+                    let usize_array = slice_from_raw_parts(ptr, (config.size >> 4) as usize);
+                #[cfg(target_pointer_width = "32")]
+                    let usize_array = slice_from_raw_parts(ptr, (config.size >> 3) as usize);
+
+                counting_vec.storage.copy_from_slice(unsafe { &*usize_array });
+
+                CountingBloomFilter { config, counting_vec }
+            }
+        }
+    };
+}
+
+from_array!(from_u8_array, u8, 2);
+from_array!(from_u16_array, u16, 4);
+from_array!(from_u32_array, u32, 8);
+from_array!(from_u64_array, u64, 16);
+
+
+impl Membership for CountingBloomFilter {
+    fn add(&mut self, element: &[u8]) {
+        let m = self.config.size as u128;
+        let hash1 = (murmur3_x64_128(element, 0) % m) as u64;
+        let hash2 = (murmur3_x64_128(element, 32) % m) as u64;
+
+        let mut res = self.counting_vec.get(hash1 as usize) > 0;
+        let m = self.config.size;
+        for i in 1..self.config.hashes as u64 {
+            let mo = ((hash1 + i * hash2) % m) as usize;
+            res = res && (self.counting_vec.get(mo) > 0);
+        }
+
+        // contains and not enable repeat insert
+        if res && !self.config.enable_repeat_insert {
+            return;
+        }
+
+        // insert
+        for i in 1..self.config.hashes as u64 {
+            let mo = ((hash1 + i * hash2) % m) as usize;
+            self.counting_vec.increment(mo);
+        };
+        self.counting_vec.increment(hash1 as usize);
+    }
+
+    #[inline]
+    fn contains(&self, element: &[u8]) -> bool {
+        let m = self.config.size as u128;
+        let hash1 = (murmur3_x64_128(element, 0) % m) as u64;
+        let hash2 = (murmur3_x64_128(element, 32) % m) as u64;
+
+        let mut res = self.counting_vec.get(hash1 as usize) > 0;
+        if !res { return false; }
+        let m = self.config.size;
+        for i in 1..self.config.hashes as u64 {
+            let mo = ((hash1 + i * hash2) % m) as usize;
+            res = res && (self.counting_vec.get(mo) > 0);
+            if !res { return false; }
+        }
+        res
+    }
+
+    fn clear(&mut self) {
+        self.counting_vec.clear()
+    }
+}
+
+impl Deletable for CountingBloomFilter {
+    fn remove(&mut self, element: &[u8]) {
+        let m = self.config.size as u128;
+        let hash1 = (murmur3_x64_128(element, 0) % m) as u64;
+        let hash2 = (murmur3_x64_128(element, 32) % m) as u64;
+
+        let mut res = self.counting_vec.get(hash1 as usize) > 0;
+        let m = self.config.size;
+        for i in 1..self.config.hashes as u64 {
+            let mo = ((hash1 + i * hash2) % m) as usize;
+            res = res && (self.counting_vec.get(mo) > 0);
+        }
+
+        // contains
+        if res {
+            for i in 1..self.config.hashes as u64 {
+                let mo = ((hash1 + i * hash2) % m) as usize;
+                self.counting_vec.decrement(mo);
+            };
+            self.counting_vec.decrement(hash1 as usize);
+        }
+    }
+}
+
+impl Hashes for CountingBloomFilter {
+    fn hashes(&self) -> u32 {
+        self.config.hashes
+    }
+}
+
+/// A Partitioned Bloom Filter is a variation of a classic Bloom Filter.
+///
+/// This filter works by partitioning the M-sized bit array into k slices of size `m = M/k` bits,
+/// `k = nb of hash functions` in the filter. Each hash function produces an index over `m` for its
+/// respective slice. Thus, each element is described by exactly `k` bits, meaning the distribution
+/// of false positives is uniform across all elements.
+///
+/// Be careful, as a Partitioned Bloom Filter have much higher collison risks that a classic
+/// Bloom Filter on small sets of data.
+///
+/// **Reference**: Chang, F., Feng, W. C., & Li, K. (2004, March). Approximate caches for packet
+/// classification. In INFOCOM 2004. Twenty-third AnnualJoint Conference of the IEEE Computer and
+/// Communications Societies (Vol. 4, pp. 2196-2207). IEEE.
+/// [Full text article](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.153.6902&rep=rep1&type=pdf)
+#[derive(Clone)]
+#[derive(Debug)]
+pub(crate) struct PartitionedBloomFilter {}
+
+impl PartitionedBloomFilter {}
+
+/// A Scalable Bloom Filter is a variant of Bloom Filters that can adapt dynamically to the number
+/// of elements stored, while assuring a maximum false positive probability.
+///
+/// **Reference**: ALMEIDA, Paulo Sérgio, BAQUERO, Carlos, PREGUIÇA, Nuno, et al. Scalable bloom
+/// filters. Information Processing Letters, 2007, vol. 101, no 6, p. 255-261.
+/// [Full text article](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.725.390&rep=rep1&type=pdf)
+#[derive(Clone)]
+#[derive(Debug)]
+pub(crate) struct ScalableBloomFilter {}
+
+impl ScalableBloomFilter {}
+
+/// An Invertible Bloom Filters (IBLT), also called Invertible Bloom Lookup Table, is a
+/// space-efficient and probabilistic data-structure for solving the set-difference problem
+/// efficiently without the use of logs or other prior context. It computes the set difference
+/// with communication proportional to the size of the difference between the sets being compared.
+/// They can simultaneously calculate D(A−B) and D(B−A) using O(d) space. This data structure
+/// encodes sets in a fashion that is similar in spirit to Tornado codes’ construction, in that it
+/// randomly combines elements using the XOR function.
+///
+/// **Reference**: Eppstein, D., Goodrich, M. T., Uyeda, F., & Varghese, G. (2011). What's the
+/// difference?: efficient set reconciliation without prior context. ACM SIGCOMM Computer
+/// Communication Review, 41(4), 218-229.
+/// [Full text article](http://www.sysnet.ucsd.edu/sysnet/miscpapers/EppGooUye-SIGCOMM-11.pdf)
+#[derive(Clone)]
+#[derive(Debug)]
+pub(crate) struct InvertibleBloomFilter {}
+
+impl InvertibleBloomFilter {}
+
+#[derive(Clone)]
+#[derive(Debug)]
+pub(crate) struct GarbledBloomFilter {}
+
+impl GarbledBloomFilter {}
+
 
 #[test]
 fn bloom_test() {
@@ -367,4 +609,79 @@ fn bloom_test() {
     assert_eq!(bloom3.contains(b"hello"), true);
     assert_eq!(bloom3.contains(b"hello world"), true);
     assert_eq!(bloom3.contains(b"hello yankun"), true);
+}
+
+#[test]
+fn counting_bloom_test() {
+    let mut builder =
+        FilterBuilder::new(10_000, 0.01);
+    let mut bloom = builder.build_counting_bloom_filter();
+
+    bloom.add(b"hello");
+
+    assert_eq!(bloom.contains(b"hello"), true);
+
+    bloom.remove(b"hello");
+    assert_eq!(bloom.contains(b"hello"), false);
+}
+
+#[test]
+fn counting_bloom_repeat_test() {
+    let mut builder = FilterBuilder::new(100_000, 0.01);
+    // enable_repeat_insert is true
+    builder.enable_repeat_insert(true);
+    let mut cbf = builder.build_counting_bloom_filter();
+    cbf.add(b"hello"); // modify underlying vector counter.
+    cbf.add(b"hello"); // modify underlying vector counter.
+    assert_eq!(cbf.contains(b"hello"), true);
+    cbf.remove(b"hello");
+    assert_eq!(cbf.contains(b"hello"), true);
+    cbf.remove(b"hello");
+    assert_eq!(cbf.contains(b"hello"), false);
+
+    // enable_repeat_insert is false
+    builder.enable_repeat_insert(false);
+    let mut cbf = builder.build_counting_bloom_filter();
+    cbf.add(b"hello"); // modify underlying vector counter.
+    cbf.add(b"hello"); // not modify underlying vector counter because b"hello" has been added.
+    assert_eq!(cbf.contains(b"hello"), true);
+    cbf.remove(b"hello");
+    assert_eq!(cbf.contains(b"hello"), false);
+}
+
+#[test]
+fn counting_bloom_from_test() {
+    let mut builder = FilterBuilder::new(100_000, 0.01);
+    let mut cbf = builder.build_counting_bloom_filter();
+
+    cbf.add(b"hello");
+    cbf.add(b"hello");
+
+    let mut cbf_copy = CountingBloomFilter::from_u8_array(cbf.get_u8_array(), builder.hashes, true);
+    assert_eq!(cbf_copy.contains(b"hello"), true);
+    cbf_copy.remove(b"hello");
+    assert_eq!(cbf_copy.contains(b"hello"), true);
+    cbf_copy.remove(b"hello");
+    assert_eq!(cbf_copy.contains(b"hello"), false);
+
+    let mut cbf_copy = CountingBloomFilter::from_u16_array(cbf.get_u16_array(), builder.hashes, true);
+    assert_eq!(cbf_copy.contains(b"hello"), true);
+    cbf_copy.remove(b"hello");
+    assert_eq!(cbf_copy.contains(b"hello"), true);
+    cbf_copy.remove(b"hello");
+    assert_eq!(cbf_copy.contains(b"hello"), false);
+
+    let mut cbf_copy = CountingBloomFilter::from_u32_array(cbf.get_u32_array(), builder.hashes, true);
+    assert_eq!(cbf_copy.contains(b"hello"), true);
+    cbf_copy.remove(b"hello");
+    assert_eq!(cbf_copy.contains(b"hello"), true);
+    cbf_copy.remove(b"hello");
+    assert_eq!(cbf_copy.contains(b"hello"), false);
+
+    let mut cbf_copy = CountingBloomFilter::from_u64_array(cbf.get_u64_array(), builder.hashes, true);
+    assert_eq!(cbf_copy.contains(b"hello"), true);
+    cbf_copy.remove(b"hello");
+    assert_eq!(cbf_copy.contains(b"hello"), true);
+    cbf_copy.remove(b"hello");
+    assert_eq!(cbf_copy.contains(b"hello"), false);
 }
