@@ -1,5 +1,6 @@
 <h1>fastbloom</h1>
 
+[![OSCS Status](https://www.oscs1024.com/platform/badge/yankun1992/fastbloom.svg?size=small)](https://www.oscs1024.com/project/yankun1992/fastbloom?ref=badge_small)
 [![docs.rs](https://img.shields.io/docsrs/fastbloom-rs/latest)](https://docs.rs/fastbloom-rs)
 [![Test Rust](https://github.com/yankun1992/fastbloom/actions/workflows/test_rust.yml/badge.svg)](https://github.com/yankun1992/fastbloom/actions/workflows/test_rust.yml)
 [![Test Python](https://github.com/yankun1992/fastbloom/actions/workflows/test_python.yml/badge.svg)](https://github.com/yankun1992/fastbloom/actions/workflows/test_python.yml)
