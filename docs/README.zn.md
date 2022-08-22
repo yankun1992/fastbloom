@@ -8,24 +8,21 @@
 [![Crates Latest Release](https://img.shields.io/crates/v/fastbloom-rs)](https://crates.io/crates/fastbloom-rs)
 [![PyPI Latest Release](https://img.shields.io/pypi/v/fastbloom-rs)](https://pypi.org/project/fastbloom-rs/)
 
-A fast [bloom filter](#BloomFilter) | [counting bloom filter](#countingbloomfilter) implemented by Rust for Rust and
-Python!
+使用 Rust 实现的  [bloom filter](#BloomFilter) | [counting bloom filter](#countingbloomfilter) Python 库及 Rust 库。
 
-[中文文档](./docs/README.zn.md)
-
-- [setup](#setup)
+- [安装](#setup)
     - [Python](#python)
         - [requirements](#requirements)
         - [install](#install)
     - [Rust](#rust)
-- [Examples](#examples)
+- [例子](#examples)
     - [BloomFilter](#bloomfilter)
         - [Python](#python-1)
         - [Rust](#rust-1)
     - [CountingBloomFilter](#countingbloomfilter)
         - [Python](#python-2)
         - [Rust](#rust-2)
-- [benchmark](#benchmark)
+- [性能测试报告](#benchmark)
     - [computer info](#computer-info)
     - [add one str to bloom filter](#add-one-str-to-bloom-filter)
     - [add one million to bloom filter](#add-one-million-to-bloom-filter)
@@ -46,7 +43,7 @@ Python >= 3.7
 
 ### install
 
-Install the latest fastbloom version with:
+使用如下命令安装 fastbloom 最新版本：
 
 ```bash
 pip install fastbloom-rs
@@ -61,18 +58,16 @@ fastbloom-rs = "{latest}"
 # Examples
 
 ## BloomFilter
+布隆过滤器（Bloom Filter）是1970年由布隆提出的。它实际上是一个很长的二进制向量和一系列随机映射函数。布隆过滤器
+可以用于检索一个元素是否在一个集合中。它的优点是空间效率和查询时间都比一般的算法要好的多，缺点是有一定的误识别率和删除困难。
 
-A Bloom filter is a space-efficient probabilistic data structure, conceived by Burton Howard
-Bloom in 1970, that is used to test whether an element is a member of a set. False positive
-matches are possible, but false negatives are not.
-
-**Reference**: Bloom, B. H. (1970). Space/time trade-offs in hash coding with allowable errors.
+**参考**: Bloom, B. H. (1970). Space/time trade-offs in hash coding with allowable errors.
 Communications of the ACM, 13(7), 422-426.
-[Full text article](http://crystal.uta.edu/~mcguigan/cse6350/papers/Bloom.pdf)
+[全文](http://crystal.uta.edu/~mcguigan/cse6350/papers/Bloom.pdf)
 
 ### Python
 
-basic usage
+基础用法
 
 ```python
 from fastbloom_rs import BloomFilter
@@ -90,7 +85,7 @@ assert bloom.contains(9527)
 assert not bloom.contains('hello world')
 ```
 
-build bloom filter from bytes or list
+基于 bytes 或者 list 构造布隆过滤器
 
 ```python
 from fastbloom_rs import BloomFilter
@@ -107,7 +102,7 @@ assert bloom3.contains('hello')
 
 ```
 
-more examples at [py_tests](py_tests/test_bloom.py).
+更多例子参考 [py_tests](py_tests/test_bloom.py).
 
 ### Rust
 
@@ -121,15 +116,14 @@ assert_eq!(bloom.contains(b"helloworld"), true);
 assert_eq!(bloom.contains(b"helloworld!"), false);
 ```
 
-more examples at [docs.rs](https://docs.rs/fastbloom-rs)
+更多例子参考 [docs.rs](https://docs.rs/fastbloom-rs)
 
 ## CountingBloomFilter
 
-A Counting Bloom filter works in a similar manner as a regular Bloom filter; however, it is
-able to keep track of insertions and deletions. In a counting Bloom filter, each entry in the
-Bloom filter is a small counter associated with a basic Bloom filter bit.
+计数布隆过滤器的工作方式与常规布隆过滤器类似;但是，它能够跟踪插入和删除。在计数布隆过滤器中，布隆过滤器的每个
+条目都是一个与基本布隆过滤器位相关联的小计数器。
 
-**Reference**: F. Bonomi, M. Mitzenmacher, R. Panigrahy, S. Singh, and G. Varghese, “An Improved
+**参考**: F. Bonomi, M. Mitzenmacher, R. Panigrahy, S. Singh, and G. Varghese, “An Improved
 Construction for Counting Bloom Filters,” in 14th Annual European Symposium on
 Algorithms, LNCS 4168, 2006
 
@@ -149,10 +143,9 @@ cbf.remove('hello')
 assert 'hello' not in cbf
 ```
 
-A CountingBloomFilter has a four bits counter to save hash index, so when insert an
-element repeatedly, the counter will spill over quickly. So, you can set
-`enable_repeat_insert` to `False` to check whether the element has added.
-if it has added, it will not add again. `enable_repeat_insert` default set to `True`.
+本计数布隆过滤器使用4bit计数器存储hash索引，所以当重复插入同一个元素到过滤器中，计数器很快就会位溢出，
+所以可以设置 `enable_repeat_insert` 为 `False` 用于避免重复插入，如果元素已经加入过滤器中，设置
+`enable_repeat_insert` 为 `False` 将使元素不会重复插入。 `enable_repeat_insert` 默认为 `True`。
 
 ```python
 from fastbloom_rs import CountingBloomFilter
@@ -165,7 +158,7 @@ cbf.remove('hello')
 assert 'hello' not in cbf 
 ```
 
-more examples at [py_tests](py_tests/test_counting_bloom_filter.py).
+更多例子参考 [py_tests](py_tests/test_counting_bloom_filter.py).
 
 ### Rust
 
@@ -188,7 +181,7 @@ assert_eq!(bloom.contains(b"helloworld"), true);
 
 ## add one str to bloom filter
 
-Benchmark insert one str to bloom filter:
+测试添加一个字符串到布隆过滤器:
 
 ```text
 bloom_add_test          time:   [41.168 ns 41.199 ns 41.233 ns]
@@ -201,7 +194,7 @@ Found 13 outliers among 100 measurements (13.00%)
 
 ## add one million to bloom filter
 
-Benchmark loop insert `(1..1_000_000).map(|n| { n.to_string() })` to bloom filter:
+添加一百万字符串（`(1..1_000_000).map(|n| { n.to_string() })`）到布隆过滤器：
 
 ```text
 bloom_add_all_test      time:   [236.24 ms 236.86 ms 237.55 ms]
@@ -213,6 +206,8 @@ Found 5 outliers among 100 measurements (5.00%)
 ```
 
 ## check one contains in bloom filter
+
+测试布隆过滤器包含的元素：
 
 ```text
 bloom_contains_test     time:   [42.065 ns 42.102 ns 42.156 ns]
@@ -226,6 +221,8 @@ Found 15 outliers among 100 measurements (15.00%)
 
 ## check one not contains in bloom filter
 
+测试布隆过滤器不包含的元素：
+
 ```text
 bloom_not_contains_test time:   [22.695 ns 22.727 ns 22.773 ns]
                         change: [-3.1948% -2.9695% -2.7268%] (p = 0.00 < 0.05)
@@ -236,6 +233,8 @@ Found 12 outliers among 100 measurements (12.00%)
 ```
 
 ## add one str to counting bloom filter
+
+测试添加一个字符串到计数布隆过滤器：
 
 ```text
 counting_bloom_add_test time:   [60.822 ns 60.861 ns 60.912 ns]
@@ -250,7 +249,7 @@ Found 10 outliers among 100 measurements (10.00%)
 
 ## add one million to counting bloom filter
 
-Benchmark loop insert `(1..1_000_000).map(|n| { n.to_string() })` to counting bloom filter:
+添加一百万字符串（`(1..1_000_000).map(|n| { n.to_string() })`）到计数布隆过滤器：
 
 ```text
 counting_bloom_add_million_test
