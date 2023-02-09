@@ -101,3 +101,25 @@ def test_bloom_intersect():
     bloom.intersect(bloom2)
     assert not bloom.contains_bytes(b'hello')
     assert bloom.contains(87)
+
+
+def test_hash_indices():
+    bloom = BloomFilter(100_000_000, 0.01)
+    bloom.add_bytes(b'hello')
+    bloom.add_str("world")
+    bloom.add(87)
+
+    bloom2 = BloomFilter(100_000_000, 0.01)
+    bloom2.add_str("Yan Kun")
+
+    assert bloom.get_hash_indices(b'hello') == bloom2.get_hash_indices(b'hello')
+
+    assert bloom.contains_hash_indices(bloom.get_hash_indices(b'hello'))
+    assert bloom.contains_hash_indices(bloom.get_hash_indices(87))
+    assert bloom.contains_hash_indices(bloom.get_hash_indices("world"))
+    assert not bloom.contains_hash_indices(bloom.get_hash_indices("Yan Kun"))
+
+    assert not bloom2.contains_hash_indices(bloom2.get_hash_indices(b'hello'))
+    assert not bloom2.contains_hash_indices(bloom2.get_hash_indices(87))
+    assert not bloom2.contains_hash_indices(bloom2.get_hash_indices("world"))
+    assert bloom2.contains_hash_indices(bloom2.get_hash_indices("Yan Kun"))

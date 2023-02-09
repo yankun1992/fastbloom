@@ -94,6 +94,10 @@ impl PyBloomFilter {
         self.bloomfilter.contains(bts.as_bytes())
     }
 
+    pub fn contains_hash_indices(&self, indices: Vec<u64>) -> bool {
+        self.bloomfilter.contains_hash_indices(&indices)
+    }
+
     pub fn config(&self) -> PyResult<PyFilterBuilder> {
         Ok(PyFilterBuilder { filter_builder: self.bloomfilter.config() })
     }
@@ -124,6 +128,18 @@ impl PyBloomFilter {
 
     pub fn intersect(&mut self, other: &PyBloomFilter) -> PyResult<bool> {
         Ok(self.bloomfilter.intersect(&other.bloomfilter))
+    }
+
+    pub fn get_hash_indices_int(&self, element: i64) -> PyResult<Vec<u64>> {
+        Ok(self.bloomfilter.get_hash_indices(&i64::to_le_bytes(element)))
+    }
+
+    pub fn get_hash_indices_str(&self, element: &str) -> PyResult<Vec<u64>> {
+        Ok(self.bloomfilter.get_hash_indices(element.as_bytes()))
+    }
+
+    pub fn get_hash_indices(&self, bts: &PyBytes) -> PyResult<Vec<u64>> {
+        Ok(self.bloomfilter.get_hash_indices(bts.as_bytes()))
     }
 
 
@@ -193,6 +209,10 @@ impl PyCountingBloomFilter {
         self.counting_bloom_filter.contains(bts.as_bytes())
     }
 
+    pub fn contains_hash_indices(&self, indices: Vec<u64>) -> bool {
+        self.counting_bloom_filter.contains_hash_indices(&indices)
+    }
+
     pub fn config(&self) -> PyResult<PyFilterBuilder> {
         Ok(PyFilterBuilder { filter_builder: self.counting_bloom_filter.config() })
     }
@@ -211,6 +231,18 @@ impl PyCountingBloomFilter {
 
     pub fn clear(&mut self) {
         self.counting_bloom_filter.clear()
+    }
+
+    pub fn get_hash_indices_int(&self, element: i64) -> PyResult<Vec<u64>> {
+        Ok(self.counting_bloom_filter.get_hash_indices(&i64::to_le_bytes(element)))
+    }
+
+    pub fn get_hash_indices_str(&self, element: &str) -> PyResult<Vec<u64>> {
+        Ok(self.counting_bloom_filter.get_hash_indices(element.as_bytes()))
+    }
+
+    pub fn get_hash_indices(&self, bts: &PyBytes) -> PyResult<Vec<u64>> {
+        Ok(self.counting_bloom_filter.get_hash_indices(bts.as_bytes()))
     }
 
     #[staticmethod]

@@ -36,6 +36,20 @@ fn bit_check(bit_set: &BloomBitVec, value: &[u8], m: u128, k: u64) -> bool {
     res
 }
 
+#[inline]
+fn get_bit_indices(bit_set: &BloomBitVec, value: &[u8], m: u128, k: u64) -> Vec<u64> {
+    let mut res = Vec::<u64>::with_capacity(k as usize);
+    let hash1 = (murmur3_x64_128(value, 0) % m) as u64;
+    let hash2 = (murmur3_x64_128(value, 32) % m) as u64;
+    res.push(hash1);
+    let m = m as u64;
+    for i in 1..k {
+        let mo = ((hash1 + i * hash2) % m) as usize;
+        res.push(mo as u64);
+    }
+    res
+}
+
 /// A Bloom filter is a space-efficient probabilistic data structure, conceived by Burton Howard
 /// Bloom in 1970, that is used to test whether an element is a member of a set. False positive
 /// matches are possible, but false negatives are not.
@@ -63,6 +77,21 @@ impl Membership for BloomFilter {
     fn contains(&self, element: &[u8]) -> bool {
         bit_check(&self.bit_set, element, self.config.size as u128,
                   self.config.hashes as u64)
+    }
+
+    /// Get the hashes indices of the element in the filter.
+    fn get_hash_indices(&self, element: &[u8]) -> Vec<u64> {
+        get_bit_indices(&self.bit_set, element, self.config.size as u128,
+                        self.config.hashes as u64)
+    }
+
+    /// Tests whether a hashes indices is present in the filter
+    fn contains_hash_indices(&self, indices: &Vec<u64>) -> bool {
+        for x in indices.iter() {
+            let index = *x;
+            if !self.bit_set.get(index as usize) { return false; }
+        }
+        true
     }
 
     /// Removes all elements from the filter (i.e. resets all bits to zero).
@@ -467,6 +496,28 @@ impl Membership for CountingBloomFilter {
         res
     }
 
+    fn get_hash_indices(&self, element: &[u8]) -> Vec<u64> {
+        let m = self.config.size as u128;
+        let mut res = Vec::<u64>::with_capacity(self.config.size as usize);
+        let hash1 = (murmur3_x64_128(element, 0) % m) as u64;
+        let hash2 = (murmur3_x64_128(element, 32) % m) as u64;
+        res.push(hash1);
+        let m = self.config.size;
+        for i in 1..self.config.hashes as u64 {
+            let mo = ((hash1 + i * hash2) % m) as usize;
+            res.push(mo as u64);
+        }
+        res
+    }
+
+    fn contains_hash_indices(&self, indices: &Vec<u64>) -> bool {
+        for x in indices.iter() {
+            let index = *x;
+            if self.counting_vec.get(index as usize) == 0 { return false; }
+        }
+        true
+    }
+
     fn clear(&mut self) {
         self.counting_vec.clear()
     }
@@ -612,6 +663,23 @@ fn bloom_test() {
 }
 
 #[test]
+fn bloom_hash_indices_test() {
+    let mut builder =
+        FilterBuilder::new(10_000, 0.01);
+    let mut bloom = builder.build_bloom_filter();
+    println!("{:?}", bloom.config);
+    bloom.add(b"hello");
+    assert_eq!(bloom.contains(b"hello"), true);
+    assert_eq!(bloom.contains(b"world"), false);
+
+    let indices = bloom.get_hash_indices(b"hello");
+    println!("{:?}", indices);
+    assert_eq!(bloom.contains_hash_indices(&indices), true);
+    assert_eq!(bloom.contains_hash_indices(&bloom.get_hash_indices(b"world")), false);
+}
+
+
+#[test]
 fn counting_bloom_test() {
     let mut builder =
         FilterBuilder::new(10_000, 0.01);
@@ -684,4 +752,22 @@ fn counting_bloom_from_test() {
     assert_eq!(cbf_copy.contains(b"hello"), true);
     cbf_copy.remove(b"hello");
     assert_eq!(cbf_copy.contains(b"hello"), false);
+}
+
+#[test]
+fn counting_bloom_hash_indices_test() {
+    let mut builder =
+        FilterBuilder::new(10_000, 0.01);
+    let mut bloom = builder.build_counting_bloom_filter();
+
+    bloom.add(b"hello");
+
+    assert_eq!(bloom.contains(b"hello"), true);
+    assert_eq!(bloom.contains_hash_indices(&bloom.get_hash_indices(b"hello")), true);
+    assert_eq!(bloom.contains_hash_indices(&bloom.get_hash_indices(b"world")), false);
+
+
+    bloom.remove(b"hello");
+    assert_eq!(bloom.contains(b"hello"), false);
+    assert_eq!(bloom.contains_hash_indices(&bloom.get_hash_indices(b"hello")), false);
 }

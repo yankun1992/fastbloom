@@ -192,6 +192,29 @@ class BloomFilter(object):
         """
         return self._py_bloom.contains_bytes(element)
 
+    def contains_hash_indices(self, indices: Sequence[int]) -> bool:
+        """
+        Tests whether a hashes indices is present in the filter
+        :param indices: indices array
+        :return:
+        """
+        return self._py_bloom.contains_hash_indices(indices)
+
+    def get_hash_indices(self, element: Union[str, int, bytes]) -> Sequence[int]:
+        """
+        Get the hashes indices of the element in the filter.
+        :param element: to compute
+        :return: indices array
+        """
+        if isinstance(element, int):
+            return self._py_bloom.get_hash_indices_int(element)
+        elif isinstance(element, str):
+            return self._py_bloom.get_hash_indices_str(element)
+        elif isinstance(element, bytes):
+            return self._py_bloom.get_hash_indices(element)
+        else:
+            return self._py_bloom.get_hash_indices_str(str(element))
+
     def config(self) -> FilterBuilder:
         """
         Returns the configuration/builder of the Bloom filter.
@@ -447,6 +470,29 @@ class CountingBloomFilter(object):
         :return: bool
         """
         return self._py_counting_bloom.contains_bytes(element)
+
+    def contains_hash_indices(self, indices: Sequence[int]) -> bool:
+        """
+        Tests whether a hashes indices is present in the filter
+        :param indices: indices array
+        :return:
+        """
+        return self._py_counting_bloom.contains_hash_indices(indices)
+
+    def get_hash_indices(self, element: Union[str, int, bytes]) -> Sequence[int]:
+        """
+        Get the hashes indices of the element in the filter.
+        :param element: to compute
+        :return: indices array
+        """
+        if isinstance(element, int):
+            return self._py_counting_bloom.get_hash_indices_int(element)
+        elif isinstance(element, str):
+            return self._py_counting_bloom.get_hash_indices_str(element)
+        elif isinstance(element, bytes):
+            return self._py_counting_bloom.get_hash_indices(element)
+        else:
+            return self._py_counting_bloom.get_hash_indices_str(str(element))
 
     def config(self) -> FilterBuilder:
         """

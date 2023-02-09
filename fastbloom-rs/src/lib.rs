@@ -15,6 +15,10 @@ pub trait Membership {
 
     fn contains(&self, element: &[u8]) -> bool;
 
+    fn get_hash_indices(&self, element: &[u8]) -> Vec<u64>;
+
+    fn contains_hash_indices(&self, indices: &Vec<u64>) -> bool;
+
     fn clear(&mut self);
 }
 

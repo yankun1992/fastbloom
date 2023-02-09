@@ -62,3 +62,32 @@ def test_op():
 
     cbf.clear()
     assert 'hello' not in cbf
+
+
+def test_hash_indices():
+    builder = FilterBuilder(100_000, 0.01)
+    # enable repeat insert
+    builder.enable_repeat_insert(True)
+    cbf = builder.build_counting_bloom_filter()  # type: CountingBloomFilter
+
+    builder2 = FilterBuilder(100_000, 0.01)
+    builder2.enable_repeat_insert(True)
+    cbf2 = builder.build_counting_bloom_filter()  # type: CountingBloomFilter
+
+    cbf.add(b'hello')
+    cbf.add(31)
+    cbf.add('world')
+
+    cbf2.add('Yan Kun')
+
+    assert cbf.get_hash_indices(b'hello') == cbf2.get_hash_indices(b'hello')
+
+    assert cbf.contains_hash_indices(cbf.get_hash_indices(b'hello'))
+    assert cbf.contains_hash_indices(cbf.get_hash_indices(31))
+    assert cbf.contains_hash_indices(cbf.get_hash_indices('world'))
+    assert not cbf.contains_hash_indices(cbf.get_hash_indices('Yan Kun'))
+
+    assert not cbf2.contains_hash_indices(cbf2.get_hash_indices(b'hello'))
+    assert not cbf2.contains_hash_indices(cbf2.get_hash_indices(31))
+    assert not cbf2.contains_hash_indices(cbf2.get_hash_indices('world'))
+    assert cbf2.contains_hash_indices(cbf2.get_hash_indices('Yan Kun'))
