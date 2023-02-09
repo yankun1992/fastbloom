@@ -1,9 +1,9 @@
 [package]
 name = "fastbloom_rs"
-version = "0.3.1"
+version = "0.4.0"
 edition = "2021"
-authors = ["Yan Kun <1939810907@qq.com>"]
-description = "Some fast bloom filter implemented by Rust for Python and Rust!"
+authors = ["Yan Kun <yan_kun_1992@foxmail.com>"]
+description = "Some fast bloom filter implemented by Rust for Python and Rust! 10x faster than pybloom!"
 documentation = "https://github.com/yankun1992/fastbloom"
 readme = "README.md"
 homepage = "https://github.com/yankun1992/fastbloom"
@@ -11,6 +11,7 @@ repository = "https://github.com/yankun1992/fastbloom"
 license-file = "LICENSE"
 keywords = ["bloom-filter", "bloom", "filter", "bloomfilter", "probabilistic data structure", "counting-bloom-filter"]
 categories = ["bloom-filter"]
+license = "Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
@@ -21,11 +22,11 @@ crate-type = ["cdylib"]
 fastbloom-rs = { path = "fastbloom-rs" }
 
 [dependencies.pyo3]
-version = "0.16"
+version = "0.17"
 features = ["extension-module", "abi3-py37"]
 
 [dev-dependencies]
-criterion = "0.3.6"
+criterion = "0.4.0"
 getrandom = { version = "0.2.7" }
 siphasher = "0.3.10"
 fastmurmur3 = "0.1.2"
