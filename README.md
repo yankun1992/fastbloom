@@ -11,7 +11,7 @@
 A fast [bloom filter](#BloomFilter) | [counting bloom filter](#countingbloomfilter) implemented by Rust for Rust and
 Python!
 
-[中文文档](./docs/README.zn.md)
+Language: [简体中文](./docs/README.zh_cn.md)
 
 - [setup](#setup)
     - [Python](#python)

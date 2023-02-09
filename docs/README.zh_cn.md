@@ -10,6 +10,8 @@
 
 使用 Rust 实现的  [bloom filter](#BloomFilter) | [counting bloom filter](#countingbloomfilter) Python 库及 Rust 库。
 
+Language: [English](../README.md)
+
 - [安装](#setup)
     - [Python](#python)
         - [requirements](#requirements)
