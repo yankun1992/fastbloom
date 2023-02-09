@@ -6,27 +6,46 @@ on:
     tags:
       - 'py-v*' # Push events to matching py-v*, i.e. py-v1.0, py-v20.15.10
 jobs:
-  build_manylinux:
-    name: Create Release manylinux
+  linux:
+    name: PyPi (x86_64)
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [ x86_64 ]
     steps:
-      - uses: actions/checkout@v2
-      - name: publish x86_64
-        uses: docker://konstin2/maturin:latest
-        env:
-          MATURIN_PASSWORD: ${{ secrets.PYPI_PASS }}
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
-          entrypoint: /bin/bash
-          args: .github/deploy_manylinux.sh
-      # needed for docker on apple m1
-      - name: publish aarch64
-        uses: messense/maturin-action@main
+          python-version: 3.7
+          architecture: x64
+      - name: publish
+        uses: PyO3/maturin-action@v1
         env:
           MATURIN_PASSWORD: ${{ secrets.PYPI_PASS }}
         with:
           rust-toolchain: stable
-          manylinux: '2_17'
-          target: aarch64-unknown-linux-gnu
-          maturin-version: 0.12.7
+          target: ${{ matrix.target }}
+          manylinux: auto
+          command: publish
+          args: --no-sdist --skip-existing -o wheels -i python -u yankun
+  linux-cross:
+    name: PyPi (cross)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [ aarch64, armv7, ppc64le, ppc64 ]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
+      - name: publish cross
+        uses: PyO3/maturin-action@v1
+        env:
+          MATURIN_PASSWORD: ${{ secrets.PYPI_PASS }}
+        with:
+          rust-toolchain: stable
+          manylinux: auto
+          target: ${{ matrix.target }}
           command: publish
           args: --no-sdist --skip-existing -o wheels -i python -u yankun
