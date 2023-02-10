@@ -24,9 +24,7 @@ jobs:
           toolchain: stable
           target: ${{ matrix.target }}
           override: true
-      - uses: actions-rs/cargo@v1
+      - name: unittest
         env:
           RUST_TARGET: ${{ matrix.target }}
-        with:
-          command: test
-          args: --target $RUST_TARGET --package fastbloom-rs --all-targets
+        run: cargo test --target $RUST_TARGET --package fastbloom-rs --all-targets
