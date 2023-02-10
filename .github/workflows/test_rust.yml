@@ -22,6 +22,7 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
+          target: ${{ matrix.target }}
           override: true
       - name: Run tests
         run: cargo test --package fastbloom-rs --all-targets
