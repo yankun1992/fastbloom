@@ -20,11 +20,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
-        env:
-          RUST_TARGET: ${{ matrix.target }}
         with:
           toolchain: stable
           target: ${{ matrix.target }}
           override: true
+      - uses: actions-rs/cargo@v1
+        env:
+          RUST_TARGET: ${{ matrix.target }}
+        with:
           command: test
           args: --target $RUST_TARGET --package fastbloom-rs --all-targets
