@@ -15,7 +15,7 @@ pub struct FilterBuilder {
 }
 
 #[cfg(target_pointer_width = "32")]
-pub(crate) const SUFFIX: u64 = 0b0001_1111;
+pub(crate) const SUFFIX: usize = 0b0001_1111;
 #[cfg(target_pointer_width = "64")]
 pub(crate) const SUFFIX: usize = 0b0011_1111;
 #[cfg(target_pointer_width = "32")]
