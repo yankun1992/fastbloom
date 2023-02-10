@@ -16,9 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.7", "3.10" ]
+        target: [ x86_64, aarch64, ppc64le, ppc64, i686, armv7, armv7l, s390x ]
+        python-version: [ "3.7", "3.8", "3.9", "3.10" ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install rust stable
         uses: actions-rs/toolchain@v1
         with:
@@ -39,9 +40,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r build.requirements.txt
       - name: Maturin develop
-        uses: messense/maturin-action@v1
+        uses: PyO3/maturin-action@v1
         with:
           maturin-version: latest
+          target: ${{ matrix.target }}
           command: develop
           args: --release
       - name: python unittest

@@ -11,19 +11,26 @@ env:
 
 jobs:
   test:
+    name: Rust unittest
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [ x86_64, aarch64, ppc64le, ppc64, i686, armv7, armv7l, s390x ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
       - name: Run tests
-        run: cargo test --all-targets
-      - name: Maturin build
-        uses: messense/maturin-action@v1
+        run: cargo test --package fastbloom-rs --all-targets
+      - name: maturin build
+        uses: PyO3/maturin-action@v1
+        env:
+          MATURIN_PASSWORD: ${{ secrets.PYPI_PASS }}
         with:
-          maturin-version: latest
+          rust-toolchain: stable
+          target: ${{ matrix.target }}
           command: build
           args: --release

@@ -1,6 +1,6 @@
 [package]
 name = "fastbloom-rs"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 authors = ["Yan Kun <yan_kun_1992@foxmail.com>"]
 description = "Some fast bloom filter implemented by Rust for Python and Rust!"
@@ -19,3 +19,4 @@ license = "Apache-2.0"
 fastmurmur3 = "0.1.2"
 cuckoofilter = "0.5.0"
 xorfilter-rs = "0.5.1"
+xxhash-rust = { version = "0.8", features = ["xxh3", "const_xxh3"] }

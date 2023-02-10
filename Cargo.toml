@@ -1,6 +1,6 @@
 [package]
 name = "fastbloom_rs"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 authors = ["Yan Kun <yan_kun_1992@foxmail.com>"]
 description = "Some fast bloom filter implemented by Rust for Python and Rust! 10x faster than pybloom!"
@@ -32,6 +32,8 @@ siphasher = "0.3.10"
 fastmurmur3 = "0.1.2"
 fxhash = "0.2.1"
 crc32fast = "1.3.2"
+twox-hash = "1.6.3"
+xxhash-rust = { version = "0.8", features = ["xxh3", "const_xxh3"] }
 
 
 [workspace]

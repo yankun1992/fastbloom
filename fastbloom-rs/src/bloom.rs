@@ -2,16 +2,19 @@ use std::clone;
 use std::ptr::slice_from_raw_parts;
 
 use fastmurmur3::murmur3_x64_128;
+use xxhash_rust::xxh3::xxh3_64_with_seed;
 
 use crate::{Deletable, Hashes, Membership};
 use crate::builder::FilterBuilder;
 use crate::vec::{BloomBitVec, CountingVec};
 
 #[inline]
-fn bit_set(bit_set: &mut BloomBitVec, value: &[u8], m: u128, k: u64) {
+fn bit_set(bit_set: &mut BloomBitVec, value: &[u8], m: u64, k: u64) {
     // let len = m >> 5;
-    let hash1 = (murmur3_x64_128(value, 0) % m) as u64;
-    let hash2 = (murmur3_x64_128(value, 32) % m) as u64;
+    // let hash1 = (murmur3_x64_128(value, 0) % m) as u64;
+    // let hash2 = (murmur3_x64_128(value, 32) % m) as u64;
+    let hash1 = xxh3_64_with_seed(value, 0) % m;
+    let hash2 = xxh3_64_with_seed(value, 32) % m;
 
     let m = m as u64;
     for i in 1..k {
@@ -22,12 +25,14 @@ fn bit_set(bit_set: &mut BloomBitVec, value: &[u8], m: u128, k: u64) {
 }
 
 #[inline]
-fn bit_check(bit_set: &BloomBitVec, value: &[u8], m: u128, k: u64) -> bool {
-    let hash1 = (murmur3_x64_128(value, 0) % m) as u64;
-    let hash2 = (murmur3_x64_128(value, 32) % m) as u64;
+fn bit_check(bit_set: &BloomBitVec, value: &[u8], m: u64, k: u64) -> bool {
+    // let hash1 = (murmur3_x64_128(value, 0) % m) as u64;
+    // let hash2 = (murmur3_x64_128(value, 32) % m) as u64;
+    let hash1 = xxh3_64_with_seed(value, 0) % m;
+    let hash2 = xxh3_64_with_seed(value, 32) % m;
     let mut res = bit_set.get(hash1 as usize);
     if !res { return false; }
-    let m = m as u64;
+    // let m = m as u64;
     for i in 1..k {
         let mo = ((hash1 + i * hash2) % m) as usize;
         res = res && bit_set.get(mo);
@@ -37,12 +42,14 @@ fn bit_check(bit_set: &BloomBitVec, value: &[u8], m: u128, k: u64) -> bool {
 }
 
 #[inline]
-fn get_bit_indices(bit_set: &BloomBitVec, value: &[u8], m: u128, k: u64) -> Vec<u64> {
+fn get_bit_indices(bit_set: &BloomBitVec, value: &[u8], m: u64, k: u64) -> Vec<u64> {
     let mut res = Vec::<u64>::with_capacity(k as usize);
-    let hash1 = (murmur3_x64_128(value, 0) % m) as u64;
-    let hash2 = (murmur3_x64_128(value, 32) % m) as u64;
+    // let hash1 = (murmur3_x64_128(value, 0) % m) as u64;
+    // let hash2 = (murmur3_x64_128(value, 32) % m) as u64;
+    let hash1 = xxh3_64_with_seed(value, 0) % m;
+    let hash2 = xxh3_64_with_seed(value, 32) % m;
     res.push(hash1);
-    let m = m as u64;
+    // let m = m as u64;
     for i in 1..k {
         let mo = ((hash1 + i * hash2) % m) as usize;
         res.push(mo as u64);
@@ -67,7 +74,7 @@ pub struct BloomFilter {
 impl Membership for BloomFilter {
     /// Adds the passed value to the filter.
     fn add(&mut self, element: &[u8]) {
-        bit_set(&mut self.bit_set, element, self.config.size as u128,
+        bit_set(&mut self.bit_set, element, self.config.size,
                 self.config.hashes as u64);
     }
 
@@ -75,13 +82,13 @@ impl Membership for BloomFilter {
     /// positive rate).
     #[inline]
     fn contains(&self, element: &[u8]) -> bool {
-        bit_check(&self.bit_set, element, self.config.size as u128,
+        bit_check(&self.bit_set, element, self.config.size,
                   self.config.hashes as u64)
     }
 
     /// Get the hashes indices of the element in the filter.
     fn get_hash_indices(&self, element: &[u8]) -> Vec<u64> {
-        get_bit_indices(&self.bit_set, element, self.config.size as u128,
+        get_bit_indices(&self.bit_set, element, self.config.size,
                         self.config.hashes as u64)
     }
 
@@ -277,7 +284,7 @@ impl BloomFilter {
         #[cfg(target_pointer_width = "64")]
             let ptr = slice_from_raw_parts(ptr, storage.len() * 4);
         #[cfg(target_pointer_width = "32")]
-            let ptr = slice_from_raw_parts(u8_ptr, storage.len() * 2);
+            let ptr = slice_from_raw_parts(ptr, storage.len() * 2);
         unsafe { &*ptr }
     }
 
@@ -288,7 +295,7 @@ impl BloomFilter {
         #[cfg(target_pointer_width = "64")]
             let ptr = slice_from_raw_parts(ptr, storage.len() * 2);
         #[cfg(target_pointer_width = "32")]
-            let ptr = slice_from_raw_parts(u8_ptr, storage.len());
+            let ptr = slice_from_raw_parts(ptr, storage.len());
         unsafe { &*ptr }
     }
 
@@ -304,7 +311,7 @@ impl BloomFilter {
             }
         }
         #[cfg(target_pointer_width = "32")]
-            let ptr = slice_from_raw_parts(u8_ptr, storage.len() / 2usize);
+            let ptr = slice_from_raw_parts(ptr, storage.len() / 2usize);
 
         unsafe { &*ptr }
     }
@@ -455,12 +462,14 @@ from_array!(from_u64_array, u64, 16);
 
 impl Membership for CountingBloomFilter {
     fn add(&mut self, element: &[u8]) {
-        let m = self.config.size as u128;
-        let hash1 = (murmur3_x64_128(element, 0) % m) as u64;
-        let hash2 = (murmur3_x64_128(element, 32) % m) as u64;
+        let m = self.config.size;
+        // let hash1 = (murmur3_x64_128(element, 0) % m) as u64;
+        // let hash2 = (murmur3_x64_128(element, 32) % m) as u64;
+        let hash1 = xxh3_64_with_seed(element, 0) % m;
+        let hash2 = xxh3_64_with_seed(element, 32) % m;
 
         let mut res = self.counting_vec.get(hash1 as usize) > 0;
-        let m = self.config.size;
+        // let m = self.config.size;
         for i in 1..self.config.hashes as u64 {
             let mo = ((hash1 + i * hash2) % m) as usize;
             res = res && (self.counting_vec.get(mo) > 0);
@@ -481,13 +490,15 @@ impl Membership for CountingBloomFilter {
 
     #[inline]
     fn contains(&self, element: &[u8]) -> bool {
-        let m = self.config.size as u128;
-        let hash1 = (murmur3_x64_128(element, 0) % m) as u64;
-        let hash2 = (murmur3_x64_128(element, 32) % m) as u64;
+        let m = self.config.size;
+        // let hash1 = (murmur3_x64_128(element, 0) % m) as u64;
+        // let hash2 = (murmur3_x64_128(element, 32) % m) as u64;
+        let hash1 = xxh3_64_with_seed(element, 0) % m;
+        let hash2 = xxh3_64_with_seed(element, 32) % m;
 
         let mut res = self.counting_vec.get(hash1 as usize) > 0;
         if !res { return false; }
-        let m = self.config.size;
+        // let m = self.config.size;
         for i in 1..self.config.hashes as u64 {
             let mo = ((hash1 + i * hash2) % m) as usize;
             res = res && (self.counting_vec.get(mo) > 0);
@@ -497,12 +508,14 @@ impl Membership for CountingBloomFilter {
     }
 
     fn get_hash_indices(&self, element: &[u8]) -> Vec<u64> {
-        let m = self.config.size as u128;
-        let mut res = Vec::<u64>::with_capacity(self.config.size as usize);
-        let hash1 = (murmur3_x64_128(element, 0) % m) as u64;
-        let hash2 = (murmur3_x64_128(element, 32) % m) as u64;
-        res.push(hash1);
         let m = self.config.size;
+        let mut res = Vec::<u64>::with_capacity(self.config.size as usize);
+        // let hash1 = (murmur3_x64_128(element, 0) % m) as u64;
+        // let hash2 = (murmur3_x64_128(element, 32) % m) as u64;
+        let hash1 = xxh3_64_with_seed(element, 0) % m;
+        let hash2 = xxh3_64_with_seed(element, 32) % m;
+        res.push(hash1);
+        // let m = self.config.size;
         for i in 1..self.config.hashes as u64 {
             let mo = ((hash1 + i * hash2) % m) as usize;
             res.push(mo as u64);
@@ -525,12 +538,14 @@ impl Membership for CountingBloomFilter {
 
 impl Deletable for CountingBloomFilter {
     fn remove(&mut self, element: &[u8]) {
-        let m = self.config.size as u128;
-        let hash1 = (murmur3_x64_128(element, 0) % m) as u64;
-        let hash2 = (murmur3_x64_128(element, 32) % m) as u64;
+        let m = self.config.size;
+        // let hash1 = (murmur3_x64_128(element, 0) % m) as u64;
+        // let hash2 = (murmur3_x64_128(element, 32) % m) as u64;
+        let hash1 = xxh3_64_with_seed(element, 0) % m;
+        let hash2 = xxh3_64_with_seed(element, 32) % m;
 
         let mut res = self.counting_vec.get(hash1 as usize) > 0;
-        let m = self.config.size;
+        // let m = self.config.size;
         for i in 1..self.config.hashes as u64 {
             let mo = ((hash1 + i * hash2) % m) as usize;
             res = res && (self.counting_vec.get(mo) > 0);

@@ -6,6 +6,9 @@ use fastmurmur3::murmur3_x64_128;
 use fxhash::{FxHasher64, hash64};
 use getrandom::getrandom;
 use siphasher::sip::SipHasher13;
+use twox_hash::{Xxh3Hash64, XxHash64};
+use xxhash_rust::const_xxh3::xxh3_64 as const_xxh3;
+use xxhash_rust::xxh3::xxh3_64;
 
 use fastbloom_rs::{BloomFilter, CountingBloomFilter, Deletable, FilterBuilder, Hashes, Membership};
 
@@ -76,6 +79,26 @@ fn hash_bench(c: &mut Criterion) {
         hello.hash(&mut fxhash);
         fxhash.finish();
     }));
+
+    c.bench_function("xxh3", |b| b.iter(|| {
+        let mut xxh3 = Xxh3Hash64::default();
+        hello.hash(&mut xxh3);
+        xxh3.finish();
+    }));
+
+    c.bench_function("xxh", |b| b.iter(|| {
+        let mut xxh = XxHash64::default();
+        hello.hash(&mut xxh);
+        xxh.finish();
+    }));
+
+    c.bench_function("xxh3_64", |b| b.iter(|| {
+        xxh3_64(black_box(hello.as_bytes()))
+    }));
+
+    c.bench_function("const_xxh3", |b| b.iter(|| {
+        const_xxh3(black_box(hello.as_bytes()))
+    }));
 }
 
 fn bloom_add_bench(c: &mut Criterion) {
@@ -107,5 +130,5 @@ fn counting_bloom_add_bench(c: &mut Criterion) {
     }));
 }
 
-criterion_group!(benches, bloom_add_bench, counting_bloom_add_bench);
+criterion_group!(benches, hash_bench, bloom_add_bench, counting_bloom_add_bench);
 criterion_main!(benches);
