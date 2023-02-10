@@ -28,4 +28,8 @@ jobs:
           command: build
           args: --release
       - name: Run tests
-        run: cargo test --package fastbloom-rs --all-targets
+        env:
+          RUST_TARGET: ${{ matrix.target }}
+        run: |
+          echo 'rust target ${RUST_TARGET}'
+          cargo test --target $RUST_TARGET --package fastbloom-rs --all-targets
