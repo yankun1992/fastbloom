@@ -1,4 +1,5 @@
 use std::clone;
+use std::cmp::min;
 use std::ptr::slice_from_raw_parts;
 
 use fastmurmur3::murmur3_x64_128;
@@ -459,6 +460,31 @@ from_array!(from_u16_array, u16, 4);
 from_array!(from_u32_array, u32, 8);
 from_array!(from_u64_array, u64, 16);
 
+impl CountingBloomFilter {
+    /// Get the estimate count for element in this counting bloom filter.
+    /// See: https://github.com/yankun1992/fastbloom/issues/3
+    pub fn estimate_count(&self, element: &[u8]) -> usize {
+        let m = self.config.size;
+        let hash1 = xxh3_64_with_seed(element, 0) % m;
+        let hash2 = xxh3_64_with_seed(element, 32) % m;
+
+        let mut res = self.counting_vec.get(hash1 as usize);
+        if res == 0 { return 0; }
+
+        for i in 1..self.config.hashes as u64 {
+            let mo = ((hash1 + i * hash2) % m) as usize;
+            let count = self.counting_vec.get(mo);
+            if count == 0 { return 0; } else { res = min(count, res) }
+        }
+
+        res
+    }
+
+    /// Get the underlying counter at index.
+    pub fn counter_at(&self, index: u64) -> usize {
+        self.counting_vec.get(index as usize)
+    }
+}
 
 impl Membership for CountingBloomFilter {
     fn add(&mut self, element: &[u8]) {
@@ -785,4 +811,26 @@ fn counting_bloom_hash_indices_test() {
     bloom.remove(b"hello");
     assert_eq!(bloom.contains(b"hello"), false);
     assert_eq!(bloom.contains_hash_indices(&bloom.get_hash_indices(b"hello")), false);
+}
+
+#[test]
+fn counting_bloom_estimate_count() {
+    let mut builder =
+        FilterBuilder::new(10_000, 0.01);
+    let mut bloom = builder.build_counting_bloom_filter();
+
+    bloom.add(b"hello");
+    bloom.add(b"world");
+
+    assert_eq!(bloom.estimate_count(b"hello"), 1);
+    let indices = bloom.get_hash_indices(b"hello");
+
+    for index in indices {
+        assert_eq!(bloom.counter_at(index), 1)
+    }
+
+    assert_eq!(bloom.estimate_count(b"world"), 1);
+    for index in bloom.get_hash_indices(b"world") {
+        assert!(bloom.counter_at(index) <= 2);
+    }
 }

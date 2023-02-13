@@ -91,3 +91,24 @@ def test_hash_indices():
     assert not cbf2.contains_hash_indices(cbf2.get_hash_indices(31))
     assert not cbf2.contains_hash_indices(cbf2.get_hash_indices('world'))
     assert cbf2.contains_hash_indices(cbf2.get_hash_indices('Yan Kun'))
+
+
+def test_estimate_count():
+    builder = FilterBuilder(100_000, 0.01)
+    # enable repeat insert
+    builder.enable_repeat_insert(True)
+    cbf = builder.build_counting_bloom_filter()  # type: CountingBloomFilter
+
+    cbf.add(b'hello')
+
+    assert cbf.estimate_count(b'hello') == 1
+
+    for index in cbf.get_hash_indices(b'hello'):
+        assert cbf.counter_at(index) == 1
+
+    cbf.add(b'world')
+    for index in cbf.get_hash_indices(b'world'):
+        assert cbf.counter_at(index) <= 2
+
+    cbf.add(b'hello')
+    assert cbf.estimate_count(b'hello') == 2

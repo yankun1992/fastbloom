@@ -494,6 +494,33 @@ class CountingBloomFilter(object):
         else:
             return self._py_counting_bloom.get_hash_indices_str(str(element))
 
+    def estimate_count(self, element: Union[str, int, bytes]) -> int:
+        """
+        Get the estimate count for element in this counting bloom filter.
+        See: https://github.com/yankun1992/fastbloom/issues/3
+
+        :param element:
+        :return:
+        """
+        if isinstance(element, int):
+            return self._py_counting_bloom.estimate_count_int(element)
+        elif isinstance(element, str):
+            return self._py_counting_bloom.estimate_count_str(element)
+        elif isinstance(element, bytes):
+            return self._py_counting_bloom.estimate_count(element)
+        else:
+            return self._py_counting_bloom.estimate_count_str(str(element))
+
+    def counter_at(self, index: int) -> int:
+        """
+        Get the underlying counter at index.
+
+        :param index: index of counter slot.
+        :return:
+        """
+        assert index > 0
+        return self._py_counting_bloom.counter_at(index)
+
     def config(self) -> FilterBuilder:
         """
         Returns the configuration/builder of the Bloom filter.

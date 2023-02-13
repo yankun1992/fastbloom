@@ -245,6 +245,22 @@ impl PyCountingBloomFilter {
         Ok(self.counting_bloom_filter.get_hash_indices(bts.as_bytes()))
     }
 
+    pub fn estimate_count_int(&self, element: i64) -> PyResult<u32> {
+        Ok(self.counting_bloom_filter.estimate_count(&i64::to_le_bytes(element)) as u32)
+    }
+
+    pub fn estimate_count_str(&self, element: &str) -> PyResult<u32> {
+        Ok(self.counting_bloom_filter.estimate_count(element.as_bytes()) as u32)
+    }
+
+    pub fn estimate_count(&self, element: &PyBytes) -> PyResult<u32> {
+        Ok(self.counting_bloom_filter.estimate_count(element.as_bytes()) as u32)
+    }
+
+    pub fn counter_at(&self, index: i64) -> PyResult<u64> {
+        Ok(self.counting_bloom_filter.counter_at(index as u64) as u64)
+    }
+
     #[staticmethod]
     pub fn from_bytes(array: &[u8], hashes: u32, enable_repeat_insert: bool) -> PyResult<Self> {
         Ok(PyCountingBloomFilter {
