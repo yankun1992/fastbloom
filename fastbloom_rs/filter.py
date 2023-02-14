@@ -518,7 +518,7 @@ class CountingBloomFilter(object):
         :param index: index of counter slot.
         :return:
         """
-        assert index > 0
+        assert index >= 0
         return self._py_counting_bloom.counter_at(index)
 
     def config(self) -> FilterBuilder:
