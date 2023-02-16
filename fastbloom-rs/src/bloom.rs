@@ -390,6 +390,12 @@ macro_rules! get_array {
                 #[cfg(target_pointer_width = "64")]
                     let arr = slice_from_raw_parts(ptr, self.counting_vec.storage.len() * $len);
                 #[cfg(target_pointer_width = "32")]
+                    if cfg!(target_pointer_width= "32") {
+                        if self.counting_vec.storage.len() % 2 != 0 {
+                            panic!("CountingVec with len {} can't export as u64 array!", storage.len())
+                        }
+                    }
+                #[cfg(target_pointer_width = "32")]
                     let arr = slice_from_raw_parts(ptr, self.counting_vec.storage.len() * $len / 2);
                 unsafe { &*arr }
             }
@@ -675,10 +681,12 @@ fn bloom_test() {
     let storage = &bloom.bit_set.storage[0..300];
     println!("{:?}", storage);
 
-    let mut bloom2 = BloomFilter::from_u64_array(bloom.get_u64_array(), bloom.hashes());
-    assert_eq!(bloom2.compatible(&bloom), true);
-    assert_eq!(bloom2.contains(b"hello"), true);
-    assert_eq!(bloom2.contains(b"world"), false);
+    #[cfg(target_pointer_width = "64")]{
+        let mut bloom2 = BloomFilter::from_u64_array(bloom.get_u64_array(), bloom.hashes());
+        assert_eq!(bloom2.compatible(&bloom), true);
+        assert_eq!(bloom2.contains(b"hello"), true);
+        assert_eq!(bloom2.contains(b"world"), false);
+    }
 
     let mut bloom3 =
         BloomFilter::from_u32_array(bloom.get_u32_array(), bloom.config.hashes);
@@ -770,7 +778,7 @@ fn counting_bloom_repeat_test() {
 
 #[test]
 fn counting_bloom_from_test() {
-    let mut builder = FilterBuilder::new(100_000, 0.01);
+    let mut builder = FilterBuilder::new(10_000_000, 0.01);
     let mut cbf = builder.build_counting_bloom_filter();
 
     cbf.add(b"hello");
@@ -797,12 +805,14 @@ fn counting_bloom_from_test() {
     cbf_copy.remove(b"hello");
     assert_eq!(cbf_copy.contains(b"hello"), false);
 
-    let mut cbf_copy = CountingBloomFilter::from_u64_array(cbf.get_u64_array(), builder.hashes, true);
-    assert_eq!(cbf_copy.contains(b"hello"), true);
-    cbf_copy.remove(b"hello");
-    assert_eq!(cbf_copy.contains(b"hello"), true);
-    cbf_copy.remove(b"hello");
-    assert_eq!(cbf_copy.contains(b"hello"), false);
+    #[cfg(target_pointer_width = "64")]{
+        let mut cbf_copy = CountingBloomFilter::from_u64_array(cbf.get_u64_array(), builder.hashes, true);
+        assert_eq!(cbf_copy.contains(b"hello"), true);
+        cbf_copy.remove(b"hello");
+        assert_eq!(cbf_copy.contains(b"hello"), true);
+        cbf_copy.remove(b"hello");
+        assert_eq!(cbf_copy.contains(b"hello"), false);
+    }
 }
 
 #[test]
