@@ -392,7 +392,7 @@ macro_rules! get_array {
                 #[cfg(target_pointer_width = "32")]
                     if cfg!(target_pointer_width= "32") {
                         if self.counting_vec.storage.len() % 2 != 0 {
-                            panic!("CountingVec with len {} can't export as u64 array!", storage.len())
+                            panic!("CountingVec with len {} can't export as u64 array!", self.counting_vec.storage.len())
                         }
                     }
                 #[cfg(target_pointer_width = "32")]
