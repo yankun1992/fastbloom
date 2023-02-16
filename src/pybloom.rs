@@ -82,16 +82,49 @@ impl PyBloomFilter {
         self.bloomfilter.add(bts.as_bytes());
     }
 
+    pub fn add_bytes_batch(&mut self, elements: Vec<&PyBytes>) {
+        for element in elements {
+            self.bloomfilter.add(element.as_bytes())
+        }
+    }
+
     pub fn contains_int(&mut self, element: i64) -> bool {
         self.bloomfilter.contains(&i64::to_le_bytes(element))
+    }
+
+    pub fn contains_int_batch(&mut self, elements: Vec<i64>) -> PyResult<Vec<bool>> {
+        let mut res = Vec::<bool>::with_capacity(elements.len());
+        for ele in elements {
+            let value = self.bloomfilter.contains(&i64::to_le_bytes(ele));
+            res.push(value);
+        }
+        Ok(res)
     }
 
     pub fn contains_str(&mut self, element: &str) -> bool {
         self.bloomfilter.contains(element.as_bytes())
     }
 
+    pub fn contains_str_batch(&mut self, elements: Vec<&str>) -> PyResult<Vec<bool>> {
+        let mut res = Vec::<bool>::with_capacity(elements.len());
+        for ele in elements {
+            let value = self.bloomfilter.contains(ele.as_bytes());
+            res.push(value);
+        }
+        Ok(res)
+    }
+
     pub fn contains_bytes(&self, bts: &PyBytes) -> bool {
         self.bloomfilter.contains(bts.as_bytes())
+    }
+
+    pub fn contains_bytes_batch(&self, elements: Vec<&PyBytes>) -> PyResult<Vec<bool>> {
+        let mut res = Vec::<bool>::with_capacity(elements.len());
+        for ele in elements {
+            let value = self.bloomfilter.contains(ele.as_bytes());
+            res.push(value);
+        }
+        Ok(res)
     }
 
     pub fn contains_hash_indices(&self, indices: Vec<u64>) -> bool {
@@ -193,6 +226,12 @@ impl PyCountingBloomFilter {
         self.counting_bloom_filter.add(bts.as_bytes());
     }
 
+    pub fn add_bytes_batch(&mut self, elements: Vec<&PyBytes>) {
+        for element in elements {
+            self.counting_bloom_filter.add(element.as_bytes())
+        }
+    }
+
     pub fn remove_bytes(&mut self, bts: &PyBytes) {
         self.counting_bloom_filter.remove(bts.as_bytes());
     }
@@ -201,12 +240,36 @@ impl PyCountingBloomFilter {
         self.counting_bloom_filter.contains(&i64::to_le_bytes(element))
     }
 
+    pub fn contains_int_batch(&mut self, elements: Vec<i64>) -> PyResult<Vec<bool>> {
+        let mut res = Vec::<bool>::with_capacity(elements.len());
+        for ele in elements {
+            res.push(self.counting_bloom_filter.contains(&i64::to_le_bytes(ele)));
+        }
+        Ok(res)
+    }
+
     pub fn contains_str(&mut self, element: &str) -> bool {
         self.counting_bloom_filter.contains(element.as_bytes())
     }
 
+    pub fn contains_str_batch(&mut self, elements: Vec<&str>) -> PyResult<Vec<bool>> {
+        let mut res = Vec::<bool>::with_capacity(elements.len());
+        for ele in elements {
+            res.push(self.counting_bloom_filter.contains(ele.as_bytes()));
+        }
+        Ok(res)
+    }
+
     pub fn contains_bytes(&self, bts: &PyBytes) -> bool {
         self.counting_bloom_filter.contains(bts.as_bytes())
+    }
+
+    pub fn contains_bytes_batch(&self, elements: Vec<&PyBytes>) -> PyResult<Vec<bool>> {
+        let mut res = Vec::<bool>::with_capacity(elements.len());
+        for ele in elements {
+            res.push(self.counting_bloom_filter.contains(ele.as_bytes()));
+        }
+        Ok(res)
     }
 
     pub fn contains_hash_indices(&self, indices: Vec<u64>) -> bool {

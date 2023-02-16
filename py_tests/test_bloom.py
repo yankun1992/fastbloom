@@ -123,3 +123,20 @@ def test_hash_indices():
     assert not bloom2.contains_hash_indices(bloom2.get_hash_indices(87))
     assert not bloom2.contains_hash_indices(bloom2.get_hash_indices("world"))
     assert bloom2.contains_hash_indices(bloom2.get_hash_indices("Yan Kun"))
+
+
+def test_batch_check():
+    bloom = BloomFilter(100_000_000, 0.01)
+    inserts = [1, 2, 3, 4, 5, 6, 7, 9, 18, 68, 90, 100]
+    checks = [1, 2, 3, 4, 5, 6, 7, 9, 18, 68, 90, 100, 190, 290, 390]
+    results = [True, True, True, True, True, True, True, True, True, True, True, True, False, False, False]
+
+    bloom.add_int_batch(inserts)
+    contains = bloom.contains_int_batch(checks)
+    assert contains == results
+
+    bloom.add_str_batch(list(map(lambda x: str(x), inserts)))
+    assert bloom.contains_str_batch(list(map(lambda x: str(x), checks))) == results
+
+    bloom.add_bytes_batch(list(map(lambda x: bytes(x), inserts)))
+    assert bloom.contains_bytes_batch(list(map(lambda x: bytes(x), checks))) == results

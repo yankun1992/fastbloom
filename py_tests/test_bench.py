@@ -40,6 +40,10 @@ def fastbloom_check():
         check = fast_filter.contains_str(ele)
 
 
+def fastbloom_batch_check():
+    fast_filter.contains_str_batch(data)
+
+
 def test_bench():
     res = timeit.timeit(pybloom_insert, number=1)
     print("\npybloom_insert\ttimeit\t" + str(res))
@@ -57,3 +61,6 @@ def test_bench():
 
     res = timeit.timeit(fastbloom_check, number=1)
     print("fastbloom_check\ttimeit\t" + str(res))
+
+    res = timeit.timeit(fastbloom_batch_check, number=1)
+    print("fastbloom_batch_check\ttimeit\t" + str(res))

@@ -112,3 +112,24 @@ def test_estimate_count():
 
     cbf.add(b'hello')
     assert cbf.estimate_count(b'hello') == 2
+
+
+def test_batch():
+    builder = FilterBuilder(100_000, 0.01)
+    # enable repeat insert
+    builder.enable_repeat_insert(True)
+    bloom = builder.build_counting_bloom_filter()  # type: CountingBloomFilter
+
+    inserts = [1, 2, 3, 4, 5, 6, 7, 9, 18, 68, 90]
+    checks = [1, 2, 3, 4, 5, 6, 7, 9, 18, 68, 90, 190, 290, 390]
+    results = [True, True, True, True, True, True, True, True, True, True, True, False, False, False]
+
+    bloom.add_int_batch(inserts)
+    contains = bloom.contains_int_batch(checks)
+    assert contains == results
+
+    bloom.add_str_batch(list(map(lambda x: str(x), inserts)))
+    assert bloom.contains_str_batch(list(map(lambda x: str(x), checks))) == results
+
+    bloom.add_bytes_batch(list(map(lambda x: bytes(x), inserts)))
+    assert bloom.contains_bytes_batch(list(map(lambda x: bytes(x), checks))) == results

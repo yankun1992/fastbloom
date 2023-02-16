@@ -1,14 +1,17 @@
 use std::hash::{Hash, Hasher};
+use std::ops::Range;
 
 use crc32fast::Hasher as CRCHasher;
 use criterion::{black_box, Criterion, criterion_group, criterion_main};
 use fastmurmur3::murmur3_x64_128;
 use fxhash::{FxHasher64, hash64};
 use getrandom::getrandom;
+use rand::Rng;
+use rand::rngs::ThreadRng;
 use siphasher::sip::SipHasher13;
 use twox_hash::{Xxh3Hash64, XxHash64};
 use xxhash_rust::const_xxh3::xxh3_64 as const_xxh3;
-use xxhash_rust::xxh3::xxh3_64;
+use xxhash_rust::xxh3::{xxh3_64, xxh3_64_with_seed};
 
 use fastbloom_rs::{BloomFilter, CountingBloomFilter, Deletable, FilterBuilder, Hashes, Membership};
 
@@ -42,6 +45,29 @@ fn bloom_add_all_test(filter: &mut BloomFilter, inputs: &[String]) {
 
 fn bloom_add_test(filter: &mut BloomFilter, data: &[u8]) {
     filter.add(data);
+}
+
+fn random_test(random: &mut ThreadRng, range: &Range<i32>) {
+    let value: usize = random.gen_range(0..4096 * 1024 - 1);
+    black_box(&u64::to_le_bytes(value as u64));
+}
+
+fn bloom_add_random_test(filter: &mut BloomFilter, random: &mut ThreadRng, range: &Range<i32>) {
+    let value = random.gen_range(0..10_000_000);
+    filter.add(&i64::to_le_bytes(value));
+}
+
+fn bound_check_test(vec: &mut Vec<usize>, random: &mut ThreadRng) {
+    let value = random.gen_range(0..4096 * 1024 - 1);
+    vec[value] = value;
+}
+
+fn unsafe_array_test(array: &mut [usize], random: &mut ThreadRng) {
+    let value = random.gen_range(0..4096 * 1024 - 1) as usize;
+    unsafe {
+        let ptr = array.as_ptr() as *mut usize;
+        *ptr.add(value) = value;
+    }
 }
 
 fn as_test(m: u128) -> u64 {
@@ -93,7 +119,7 @@ fn hash_bench(c: &mut Criterion) {
     }));
 
     c.bench_function("xxh3_64", |b| b.iter(|| {
-        xxh3_64(black_box(hello.as_bytes()))
+        xxh3_64_with_seed(black_box(hello.as_bytes()), black_box(0)) % black_box(4096)
     }));
 
     c.bench_function("const_xxh3", |b| b.iter(|| {
@@ -106,10 +132,19 @@ fn bloom_add_bench(c: &mut Criterion) {
     let items_count = 100_000_000;
 
     let hello = "hellohellohellohello".to_string();
+    let mut random = rand::thread_rng();
+    let range = 0..10_000_000;
 
     let mut filter = FilterBuilder::new(items_count as u64, 0.001).build_bloom_filter();
 
+    let mut vec = vec![0; 4096 * 1024];
+
+    c.bench_function("bound_check_test", |b| b.iter(|| bound_check_test(&mut vec, &mut random)));
+    c.bench_function("unsafe_array_test", |b| b.iter(|| unsafe_array_test(&mut vec, &mut random)));
+
     c.bench_function("bloom_add_test", |b| b.iter(|| bloom_add_test(&mut filter, black_box("hellohellohellohello".as_bytes()))));
+    c.bench_function("random_test", |b| b.iter(|| random_test(&mut random, &range)));
+    c.bench_function("bloom_add_random_test", |b| b.iter(|| bloom_add_random_test(&mut filter, &mut random, &range)));
     c.bench_function("bloom_add_all_test", |b| b.iter(|| bloom_add_all_test(&mut filter, &inputs[..])));
 
     c.bench_function("bloom_contains_test", |b| b.iter(|| filter.contains(black_box(hello.as_bytes()))));
@@ -130,5 +165,5 @@ fn counting_bloom_add_bench(c: &mut Criterion) {
     }));
 }
 
-criterion_group!(benches, hash_bench, bloom_add_bench, counting_bloom_add_bench);
+criterion_group!(benches, hash_bench, mod_bench, bloom_add_bench, counting_bloom_add_bench);
 criterion_main!(benches);

@@ -149,6 +149,14 @@ class BloomFilter(object):
         """
         self._py_bloom.add_bytes(element)
 
+    def add_bytes_batch(self, elements: Sequence[bytes]):
+        """
+        Add all bytes to the filter.
+        :param elements: byte list
+        :return:
+        """
+        self._py_bloom.add_bytes_batch(elements)
+
     def contains(self, element: Union[str, int, bytes]) -> bool:
         """
         Tests whether an element is present in the filter (subject to the specified false positive rate).
@@ -174,6 +182,19 @@ class BloomFilter(object):
         """
         return self._py_bloom.contains_int(element)
 
+    def contains_int_batch(self, elements: Sequence[int], check_type: bool = True) -> Sequence[bool]:
+        """
+        Check all int element whether in the filter.
+
+        :param elements: elements to check
+        :param check_type: whether to check elements in elements is type int
+        :return: a bool sequence for each element in elements is whether in this filter.
+        """
+        if check_type:
+            for ele in elements:
+                assert isinstance(ele, int)
+        return self._py_bloom.contains_int_batch(elements)
+
     def contains_str(self, element: str) -> bool:
         """
         Tests whether an element is present in the filter (subject to the specified false positive rate).
@@ -183,6 +204,19 @@ class BloomFilter(object):
         """
         return self._py_bloom.contains_str(element)
 
+    def contains_str_batch(self, elements: Sequence[str], check_type: bool = True) -> Sequence[bool]:
+        """
+        Check all int element whether in the filter.
+
+        :param elements: elements to check
+        :param check_type: whether to check elements in elements is type str
+        :return: a bool sequence for each element in elements is whether in this filter.
+        """
+        if check_type:
+            for ele in elements:
+                assert isinstance(ele, str)
+        return self._py_bloom.contains_str_batch(elements)
+
     def contains_bytes(self, element: bytes) -> bool:
         """
         Tests whether an element is present in the filter (subject to the specified false positive rate).
@@ -191,6 +225,19 @@ class BloomFilter(object):
         :return: bool
         """
         return self._py_bloom.contains_bytes(element)
+
+    def contains_bytes_batch(self, elements: Sequence[bytes], check_type: bool = True) -> Sequence[bool]:
+        """
+        Check all int element whether in the filter.
+
+        :param elements: elements to check
+        :param check_type: whether to check elements in elements is type bytes
+        :return: a bool sequence for each element in elements is whether in this filter.
+        """
+        if check_type:
+            for ele in elements:
+                assert isinstance(ele, bytes)
+        return self._py_bloom.contains_bytes_batch(elements)
 
     def contains_hash_indices(self, indices: Sequence[int]) -> bool:
         """
@@ -419,6 +466,15 @@ class CountingBloomFilter(object):
         """
         self._py_counting_bloom.add_bytes(element)
 
+    def add_bytes_batch(self, elements: Sequence[bytes]):
+        """
+        Add all bytes to the filter.
+
+        :param elements: byte list
+        :return:
+        """
+        self._py_counting_bloom.add_bytes_batch(elements)
+
     def remove_bytes(self, element: bytes):
         """
         Remove element from this filter.
@@ -453,6 +509,19 @@ class CountingBloomFilter(object):
         """
         return self._py_counting_bloom.contains_int(element)
 
+    def contains_int_batch(self, elements: Sequence[int], check_type: bool = True) -> Sequence[bool]:
+        """
+        Check all int element whether in the filter.
+
+        :param elements: elements to check
+        :param check_type: whether to check elements in elements is type int
+        :return: a bool sequence for each element in elements is whether in this filter.
+        """
+        if check_type:
+            for ele in elements:
+                assert isinstance(ele, int)
+        return self._py_counting_bloom.contains_int_batch(elements)
+
     def contains_str(self, element: str) -> bool:
         """
         Tests whether an element is present in the filter (subject to the specified false positive rate).
@@ -462,6 +531,19 @@ class CountingBloomFilter(object):
         """
         return self._py_counting_bloom.contains_str(element)
 
+    def contains_str_batch(self, elements: Sequence[str], check_type: bool = True) -> Sequence[bool]:
+        """
+        Check all int element whether in the filter.
+
+        :param elements: elements to check
+        :param check_type: whether to check elements in elements is type str
+        :return: a bool sequence for each element in elements is whether in this filter.
+        """
+        if check_type:
+            for ele in elements:
+                assert isinstance(ele, str)
+        return self._py_counting_bloom.contains_str_batch(elements)
+
     def contains_bytes(self, element: bytes) -> bool:
         """
         Tests whether an element is present in the filter (subject to the specified false positive rate).
@@ -470,6 +552,19 @@ class CountingBloomFilter(object):
         :return: bool
         """
         return self._py_counting_bloom.contains_bytes(element)
+
+    def contains_bytes_batch(self, elements: Sequence[bytes], check_type: bool = True) -> Sequence[bool]:
+        """
+        Check all int element whether in the filter.
+
+        :param elements: elements to check
+        :param check_type: whether to check elements in elements is type bytes
+        :return: a bool sequence for each element in elements is whether in this filter.
+        """
+        if check_type:
+            for ele in elements:
+                assert isinstance(ele, bytes)
+        return self._py_counting_bloom.contains_bytes_batch(elements)
 
     def contains_hash_indices(self, indices: Sequence[int]) -> bool:
         """
