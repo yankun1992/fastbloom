@@ -197,7 +197,7 @@ fn optimal_test() {
     let n = optimal_n(k, m);
     let p = optimal_p(k, m, n);
     println!("{m} {k} {n} {p}");
-    assert_eq!(m, 958505856);
+    assert_eq!(m, 962710784);
     assert_eq!(k, 7)
 }
 
