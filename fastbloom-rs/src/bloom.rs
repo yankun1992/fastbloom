@@ -25,16 +25,6 @@ fn bit_set(bit_set: &mut BloomBitVec, value: &[u8], m: u64, k: u64) {
     bit_set.set(hash1 as usize);
 }
 
-fn bit_set_cache_friendly(bit_set: &mut BloomBitVec, value: &[u8], m: u64, k: u64) {
-    let hash1 = xxh3_64_with_seed(value, 0) % m;
-    bit_set.set(hash1 as usize);
-    for i in 1..k {
-        let hash = xxh3_64_with_seed(value, 32 * i) % 64;
-        let mo = ((hash1 + hash) % m) as usize;
-        bit_set.set(mo);
-    };
-}
-
 #[inline]
 fn bit_check(bit_set: &BloomBitVec, value: &[u8], m: u64, k: u64) -> bool {
     // let hash1 = (murmur3_x64_128(value, 0) % m) as u64;

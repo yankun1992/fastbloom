@@ -127,6 +127,13 @@ fn hash_bench(c: &mut Criterion) {
     }));
 }
 
+fn bound_check_bench(c: &mut Criterion) {
+    let mut random = rand::thread_rng();
+    let mut vec = vec![0; 4096 * 1024];
+    c.bench_function("bound_check_test", |b| b.iter(|| bound_check_test(&mut vec, &mut random)));
+    c.bench_function("unsafe_array_test", |b| b.iter(|| unsafe_array_test(&mut vec, &mut random)));
+}
+
 fn bloom_add_bench(c: &mut Criterion) {
     let inputs: Vec<String> = (1..1_000_000).map(|n| { n.to_string() }).collect();
     let items_count = 100_000_000;
@@ -136,11 +143,6 @@ fn bloom_add_bench(c: &mut Criterion) {
     let range = 0..10_000_000;
 
     let mut filter = FilterBuilder::new(items_count as u64, 0.001).build_bloom_filter();
-
-    let mut vec = vec![0; 4096 * 1024];
-
-    c.bench_function("bound_check_test", |b| b.iter(|| bound_check_test(&mut vec, &mut random)));
-    c.bench_function("unsafe_array_test", |b| b.iter(|| unsafe_array_test(&mut vec, &mut random)));
 
     c.bench_function("bloom_add_test", |b| b.iter(|| bloom_add_test(&mut filter, black_box("hellohellohellohello".as_bytes()))));
     c.bench_function("random_test", |b| b.iter(|| random_test(&mut random, &range)));
@@ -165,5 +167,5 @@ fn counting_bloom_add_bench(c: &mut Criterion) {
     }));
 }
 
-criterion_group!(benches, hash_bench, mod_bench, bloom_add_bench, counting_bloom_add_bench);
+criterion_group!(benches, bloom_add_bench, counting_bloom_add_bench);
 criterion_main!(benches);
