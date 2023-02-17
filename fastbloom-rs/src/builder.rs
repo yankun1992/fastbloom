@@ -27,7 +27,6 @@ pub(crate) const MASK: u64 = 0b11111111_11111111_11111111_11111111_11111111_1111
 /// number of elements in bloom filter) and `p` (tolerable false positive rate).
 #[inline]
 fn optimal_m(n: u64, p: f64) -> u64 {
-    let p = 0.98 * p;
     let fact = -(n as f64) * p.ln();
     let div = 2f64.ln().powi(2);
     let m: f64 = fact / div;
