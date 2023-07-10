@@ -62,6 +62,10 @@ impl PyBloomFilter {
         self.bloomfilter.add(&i64::to_le_bytes(element));
     }
 
+    pub fn add_int_if_not_contains(&mut self, element: i64) -> bool {
+        self.bloomfilter.add_if_not_contains(&i64::to_le_bytes(element))
+    }
+
     pub fn add_int_batch(&mut self, array: Vec<i64>) {
         for x in array {
             self.add_int(x)
@@ -70,6 +74,10 @@ impl PyBloomFilter {
 
     pub fn add_str(&mut self, element: &str) {
         self.bloomfilter.add(element.as_bytes());
+    }
+
+    pub fn add_str_if_not_contains(&mut self, element: &str) -> bool {
+        self.bloomfilter.add_if_not_contains(element.as_bytes())
     }
 
     pub fn add_str_batch(&mut self, array: Vec<&str>) {
@@ -86,6 +94,10 @@ impl PyBloomFilter {
         for element in elements {
             self.bloomfilter.add(element.as_bytes())
         }
+    }
+
+    pub fn add_bytes_if_not_contains(&mut self, bts: &PyBytes) -> bool {
+        self.bloomfilter.add_if_not_contains(bts.as_bytes())
     }
 
     pub fn contains_int(&mut self, element: i64) -> bool {

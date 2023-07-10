@@ -43,6 +43,23 @@ fn bit_check(bit_set: &BloomBitVec, value: &[u8], m: u64, k: u64) -> bool {
 }
 
 #[inline]
+fn bit_check_and_set(bit_set: &mut BloomBitVec, value: &[u8], m: u64, k: u64) -> bool {
+    // let hash1 = (murmur3_x64_128(value, 0) % m) as u64;
+    // let hash2 = (murmur3_x64_128(value, 32) % m) as u64;
+    let hash1 = xxh3_64_with_seed(value, 0) % m;
+    let hash2 = xxh3_64_with_seed(value, 32) % m;
+    let mut res = bit_set.get(hash1 as usize);
+    bit_set.set(hash1 as usize);
+    // let m = m as u64;
+    for i in 1..k {
+        let mo = ((hash1 + i * hash2) % m) as usize;
+        res = res && bit_set.get(mo);
+        bit_set.set(mo);
+    }
+    res
+}
+
+#[inline]
 fn get_bit_indices(bit_set: &BloomBitVec, value: &[u8], m: u64, k: u64) -> Vec<u64> {
     let mut res = Vec::<u64>::with_capacity(k as usize);
     // let hash1 = (murmur3_x64_128(value, 0) % m) as u64;
@@ -133,6 +150,14 @@ impl BloomFilter {
         #[cfg(target_pointer_width = "32")]
             let bit_set = BloomBitVec::new((config.size >> 5) as usize);
         BloomFilter { config, bit_set }
+    }
+
+    /// Tests whether an element is present in the filter (subject to the specified false
+    /// positive rate). And if it is not in this filter, add it to the filter.
+    #[inline]
+    pub fn add_if_not_contains(&mut self, element: &[u8]) -> bool {
+        bit_check_and_set(&mut self.bit_set, element, self.config.size,
+                          self.config.hashes as u64)
     }
 
     /// Build a Bloom filter form `&[u8]`.
@@ -667,6 +692,8 @@ fn bloom_test() {
     println!("{:?}", &bloom.bit_set.storage[0..300]);
     assert_eq!(bloom.contains(b"hello"), true);
     assert_eq!(bloom.contains(b"world"), false);
+    assert_eq!(bloom.add_if_not_contains(b"hello2"), false);
+    assert_eq!(bloom.contains(b"hello2"), true);
 
     let storage = &bloom.bit_set.storage[0..300];
     println!("{:?}", storage);

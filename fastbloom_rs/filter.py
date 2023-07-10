@@ -116,6 +116,24 @@ class BloomFilter(object):
         else:
             self._py_bloom.add_str(str(element))
 
+    def add_if_not_contains(self, element: Union[str, int, bytes]) -> bool:
+        """
+        Tests whether an element is present in the filter (subject to the specified false positive rate).
+        And if it is not in this filter, add it to the filter.
+
+        :param element: value to test
+        :return: “False” if this element did not exist in the Bloom filter before, and then this method will insert
+        this element into the current filter. “True” if the element is already in the Bloom filter.
+        """
+        if isinstance(element, int):
+            return self._py_bloom.add_int_if_not_contains(element)
+        elif isinstance(element, str):
+            return self._py_bloom.add_str_if_not_contains(element)
+        elif isinstance(element, bytes):
+            return self._py_bloom.add_bytes_if_not_contains(element)
+        else:
+            return self._py_bloom.add_str_if_not_contains(str(element))
+
     def add_int(self, element: int):
         """
         Add element to the filter.

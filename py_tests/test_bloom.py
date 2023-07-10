@@ -15,6 +15,11 @@ def test_bloom_builder():
     assert b'hello' in bloom
     assert not bloom.contains_bytes(b'hello world')
 
+    assert not bloom.add_if_not_contains('hello2')
+    assert bloom.contains('hello2')
+    assert not bloom.add_if_not_contains(88)
+    assert bloom.contains(88)
+
     bloom2 = BloomFilter.from_int_array(bloom.get_int_array(), bloom.hashes())
 
     assert bloom2.contains_bytes(b'hello')

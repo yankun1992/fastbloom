@@ -58,12 +58,12 @@ fn bloom_add_random_test(filter: &mut BloomFilter, random: &mut ThreadRng, range
 }
 
 fn bound_check_test(vec: &mut Vec<usize>, random: &mut ThreadRng) {
-    let value = random.gen_range(0..4096 * 1024 - 1);
+    let value = random.gen_range(0..20 * 1024 * 1024 - 1);
     vec[value] = value;
 }
 
 fn unsafe_array_test(array: &mut [usize], random: &mut ThreadRng) {
-    let value = random.gen_range(0..4096 * 1024 - 1) as usize;
+    let value = random.gen_range(0..20 * 1024 * 1024 - 1) as usize;
     unsafe {
         let ptr = array.as_ptr() as *mut usize;
         *ptr.add(value) = value;
@@ -129,7 +129,7 @@ fn hash_bench(c: &mut Criterion) {
 
 fn bound_check_bench(c: &mut Criterion) {
     let mut random = rand::thread_rng();
-    let mut vec = vec![0; 4096 * 1024];
+    let mut vec = vec![0; 20 * 1024 * 1024];
     c.bench_function("bound_check_test", |b| b.iter(|| bound_check_test(&mut vec, &mut random)));
     c.bench_function("unsafe_array_test", |b| b.iter(|| unsafe_array_test(&mut vec, &mut random)));
 }
