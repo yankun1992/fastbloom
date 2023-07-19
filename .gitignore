@@ -16,3 +16,13 @@ Cargo.lock
 *.pyc
 
 __pychche__
+
+out
+fastbloomjvm/native/target
+fastbloomjvm/native/Cargo.lock
+fastbloomjvm/native/.idea
+
+.pytest_cache
+.vscode
+py_tests/.pytest_cache
+data

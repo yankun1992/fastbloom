@@ -1,6 +1,6 @@
 [package]
 name = "fastbloom_rs"
-version = "0.5.4"
+version = "0.5.5"
 edition = "2021"
 authors = ["Yan Kun <yan_kun_1992@foxmail.com>"]
 description = "Some fast bloom filter implemented by Rust for Python and Rust! 10x faster than pybloom!"
@@ -39,6 +39,7 @@ rand = "0.8"
 
 [workspace]
 members = ["fastbloom-rs"]
+exclude = ["fastbloomjvm/native"]
 
 [[bench]]
 name = "fastbloom"
