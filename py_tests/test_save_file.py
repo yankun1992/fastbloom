@@ -24,6 +24,8 @@ def test_save():
             os.remove('data/counting.bin')
         except Exception as e:
             pass
+    else:
+        os.makedirs('data')
 
     with open('data/bloom.bin', "wb") as f:
         array = bloom.get_bytes()
