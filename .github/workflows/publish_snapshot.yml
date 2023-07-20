@@ -15,11 +15,14 @@ env:
 jobs:
   cross:
     strategy:
+      fail-fast: false
       matrix:
         # a list of all the targets
         include:
           - TARGET: x86_64-pc-windows-msvc
             OS: windows-latest
+          - TARGET: x86_64-apple-darwin
+            OS: macos-latest
           - TARGET: aarch64-apple-darwin
             OS: macos-latest
     runs-on: ${{ matrix.OS }}
@@ -45,6 +48,7 @@ jobs:
         with:
           name: result
           path: out/fastbloomjvm/compileNative.dest/native/
+      - run: ls -R out/fastbloomjvm/compileNative.dest/native/
   deploy:
     needs: cross
     runs-on: ubuntu-22.04
