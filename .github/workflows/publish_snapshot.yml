@@ -1,0 +1,73 @@
+name: Publish snapshot
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  COURSIER_REPOSITORIES: central|https://s01.oss.sonatype.org/content/repositories/snapshots|jitpack|https://corporate.com/repo
+  PGP_SECRET: ${{ secrets.PGP_SECRET }}
+  PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+  SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+
+jobs:
+  cross:
+    strategy:
+      fail-fast: false
+      matrix:
+        # a list of all the targets
+        include:
+          - TARGET: x86_64-unknown-linux-gnu # tested in a debian container on a mac
+            OS: ubuntu-latest
+          - TARGET: x86_64-unknown-linux-musl # test in an alpine container on a mac
+            OS: ubuntu-latest
+          - TARGET: x86_64-pc-windows-msvc # tested on a windows machine
+            OS: windows-latest
+    runs-on: ${{ matrix.OS }}
+    env:
+      NAME: rust cross compile
+      TARGET: ${{ matrix.TARGET }}
+      OS: ${{ matrix.OS }}
+      MILL_RUST_TARGET: ${{ matrix.TARGET }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.TARGET }}
+          override: true
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '8'
+      - run: chmod +x millw
+      - run: ./millw fastbloomjvm.compileNative
+      - uses: actions/upload-artifact@v3
+        with:
+          name: result
+          path: out/fastbloomjvm/compileNative.dest/native/
+  deploy:
+    runs-on: ubuntu-22.04
+    env:
+      MILL_RUST_TARGET: x86_64-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-gnu
+          override: true
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '8'
+      - run: chmod +x millw
+      - run: ./millw fastbloomjvm.compileNative
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: result
+          path: out/fastbloomjvm/compileNative.dest/native/
+      - run: ./millw fastbloomjvm.jar
