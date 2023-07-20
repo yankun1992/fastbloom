@@ -1,7 +1,7 @@
 import mill._, scalalib._, publish._
 import mill.define.Sources
 import mill.scalalib.JavaModule
-import $ivy.`io.github.otavia-projects::mill-rust_mill$MILL_BIN_PLATFORM:0.2.1`
+import $ivy.`io.github.otavia-projects::mill-rust_mill$MILL_BIN_PLATFORM:0.2.3`
 import io.github.otavia.jni.plugin.RustJniModule
 
 object ProjectInfo {
@@ -45,7 +45,7 @@ object fastbloomjvm extends RustJniModule with PublishModule {
 
   override def artifactId = "fastbloom"
 
-  override def ivyDeps = Agg(ivy"io.github.otavia-projects:jni-loader:0.2.1")
+  override def ivyDeps = Agg(ivy"io.github.otavia-projects:jni-loader:0.2.3")
 
   object test extends Tests with TestModule.Junit4 {
 
