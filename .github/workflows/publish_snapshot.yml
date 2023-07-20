@@ -20,8 +20,6 @@ jobs:
         include:
           - TARGET: x86_64-pc-windows-msvc
             OS: windows-latest
-          - TARGET: x86_64-apple-darwin
-            OS: macos-latest
           - TARGET: aarch64-apple-darwin
             OS: macos-latest
     runs-on: ${{ matrix.OS }}
