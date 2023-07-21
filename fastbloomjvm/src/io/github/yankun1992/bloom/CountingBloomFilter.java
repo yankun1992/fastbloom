@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
  * A Counting Bloom filter works in a similar manner as a regular Bloom filter; however, it is able to keep track of
  * insertions and deletions. In a counting Bloom filter, each entry in the Bloom filter is a small counter associated
  * with a basic Bloom filter bit.
- * <br/>
+ *
  * <b>Reference</b>: F. Bonomi, M. Mitzenmacher, R. Panigrahy, S. Singh, and G. Varghese, "An Improved Construction
  * for Counting Bloom Filters," in 14th Annual European Symposium on Algorithms, LNCS 4168, 2006
  */

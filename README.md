@@ -18,6 +18,7 @@ Language: [简体中文](./docs/README.zh_cn.md)
         - [requirements](#requirements)
         - [install](#install)
     - [Rust](#rust)
+    - [Java](#java)
 - [Examples](#examples)
     - [BloomFilter](#bloomfilter)
         - [Python](#python-1)
@@ -56,6 +57,16 @@ pip install fastbloom-rs
 
 ```toml
 fastbloom-rs = "{latest}"
+```
+
+## Java
+maven
+```xml
+<dependency>
+    <groupId>io.github.yankun1992</groupId>
+    <artifactId>fastbloom</artifactId>
+    <version>{latest-version}</version>
+</dependency>
 ```
 
 # Examples
