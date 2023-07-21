@@ -65,13 +65,13 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '8'
-      - run: chmod +x millw
-      - run: ./millw fastbloomjvm.compileNative
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
           name: result
           path: out/fastbloomjvm/compileNative.dest/native/
+      - run: chmod +x millw
+      - run: ./millw fastbloomjvm.compileNative
       - run: ls -R out/fastbloomjvm/compileNative.dest/native/
       - run: ./millw fastbloomjvm.jar
       - run: ls -R out/fastbloomjvm/compileNative.dest/native/
