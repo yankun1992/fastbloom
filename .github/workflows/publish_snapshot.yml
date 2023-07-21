@@ -74,8 +74,10 @@ jobs:
           path: out/fastbloomjvm/compileNative.dest/native/
       - run: ls -R out/fastbloomjvm/compileNative.dest/native/
       - run: ./millw fastbloomjvm.jar
+      - run: ls -R out/fastbloomjvm/compileNative.dest/native/
       - run: echo $PGP_SECRET | base64 --decode > gpg_key && gpg --import --no-tty --batch --yes gpg_key
       - run: ./millw -i __.publishArtifacts
+      - run: ls -R out/fastbloomjvm/compileNative.dest/native/
       - run: gpg --passphrase=$PGP_PASSPHRASE --no-tty --pinentry-mode loopback --batch --yes -a -b build.sc
       - run: ./millw -d mill.scalalib.PublishModule/publishAll --publishArtifacts __.publishArtifacts --sonatypeCreds yankun1992:$SONATYPE_PASSWORD  --gpgArgs --passphrase=$PGP_PASSPHRASE,--no-tty,--pinentry-mode,loopback,--batch,--yes,-a,-b --sonatypeUri https://s01.oss.sonatype.org/service/local --sonatypeSnapshotUri https://s01.oss.sonatype.org/content/repositories/snapshots --readTimeout 600000 --awaitTimeout 600000 --signed true
       - run: rm gpg_key
