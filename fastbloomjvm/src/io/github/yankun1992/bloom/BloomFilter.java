@@ -24,9 +24,9 @@ import java.io.IOException;
  * A Bloom filter is a space-efficient probabilistic data structure, conceived by Burton Howard Bloom in 1970, that is
  * used to test whether an element is a member of a set. False positive matches are possible, but false negatives
  * are not.
- * <br/>
- * <b>Reference<b/>: Bloom, B. H. (1970). Space/time trade-offs in hash coding with allowable errors. Communications of
- * the ACM, 13(7), 422-426. <a href="http://crystal.uta.edu/~mcguigan/cse6350/papers/Bloom.pdf">Full text article</>
+ *
+ * <b>Reference</b>: Bloom, B. H. (1970). Space/time trade-offs in hash coding with allowable errors. Communications of
+ * the ACM, 13(7), 422-426. <a href="http://crystal.uta.edu/~mcguigan/cse6350/papers/Bloom.pdf"> Full text article</a>
  */
 public class BloomFilter extends NativeLoader implements AutoCloseable {
 
@@ -44,8 +44,9 @@ public class BloomFilter extends NativeLoader implements AutoCloseable {
     /**
      * Add element to the filter.
      *
+     * <b>notice</b>: In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
+     *
      * @param element value to add
-     * @apiNote In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
      */
     public void addInt(int element) {
         addInt0(raw, element);
@@ -58,8 +59,9 @@ public class BloomFilter extends NativeLoader implements AutoCloseable {
     /**
      * Add element to the filter.
      *
+     * <b>notice</b>: In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
+     *
      * @param element value to add
-     * @apiNote In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
      */
     public void addLong(long element) {
         addLong0(raw, element);
@@ -86,9 +88,10 @@ public class BloomFilter extends NativeLoader implements AutoCloseable {
     /**
      * Tests whether an element is present in the filter (subject to the specified false positive rate).
      *
+     * <b>notice</b>: In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
+     *
      * @param element to test
      * @return true if element is in this filter.
-     * @apiNote In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
      */
     public boolean containsInt(int element) {
         return containsInt0(raw, element);
@@ -97,9 +100,10 @@ public class BloomFilter extends NativeLoader implements AutoCloseable {
     /**
      * Tests whether an element is present in the filter (subject to the specified false positive rate).
      *
+     * <b>notice</b>: In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
+     *
      * @param element to test
      * @return true if element is in this filter.
-     * @apiNote In Python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
      */
     public boolean containsLong(long element) {
         return containsLong0(raw, element);

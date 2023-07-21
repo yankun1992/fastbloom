@@ -26,8 +26,8 @@ import java.nio.ByteBuffer;
  * insertions and deletions. In a counting Bloom filter, each entry in the Bloom filter is a small counter associated
  * with a basic Bloom filter bit.
  * <br/>
- * <b>Reference<b/>: F. Bonomi, M. Mitzenmacher, R. Panigrahy, S. Singh, and G. Varghese, “An Improved Construction
- * for Counting Bloom Filters,” in 14th Annual European Symposium on Algorithms, LNCS 4168, 2006
+ * <b>Reference</b>: F. Bonomi, M. Mitzenmacher, R. Panigrahy, S. Singh, and G. Varghese, "An Improved Construction
+ * for Counting Bloom Filters," in 14th Annual European Symposium on Algorithms, LNCS 4168, 2006
  */
 public class CountingBloomFilter extends NativeLoader implements AutoCloseable {
 
@@ -45,7 +45,7 @@ public class CountingBloomFilter extends NativeLoader implements AutoCloseable {
     /**
      * Add element to the filter.
      *
-     * @apiNote In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
+     * <b>notice</b>: In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
      */
     public void addInt(int element) {
         addInt0(raw, element);
@@ -54,7 +54,7 @@ public class CountingBloomFilter extends NativeLoader implements AutoCloseable {
     /**
      * Remove element from this filter.
      *
-     * @apiNote In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
+     * <b>notice</b>: In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
      */
     public void removeInt(int element) {
         removeInt0(raw, element);
@@ -63,8 +63,9 @@ public class CountingBloomFilter extends NativeLoader implements AutoCloseable {
     /**
      * Add element to the filter.
      *
+     * <b>notice</b>: In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
+     *
      * @param element value to add
-     * @apiNote In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
      */
     public void addLong(long element) {
         addLong0(raw, element);
@@ -73,7 +74,7 @@ public class CountingBloomFilter extends NativeLoader implements AutoCloseable {
     /**
      * Remove element from this filter.
      *
-     * @apiNote In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
+     * <b>notice</b>: In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
      */
     public void removeLong(long element) {
         removeLong0(raw, element);
@@ -110,9 +111,10 @@ public class CountingBloomFilter extends NativeLoader implements AutoCloseable {
     /**
      * Tests whether an element is present in the filter (subject to the specified false positive rate).
      *
+     * <b>notice</b>: In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
+     *
      * @param element to test
      * @return true if element is in this filter.
-     * @apiNote In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
      */
     public boolean containsInt(int element) {
         return containsInt0(raw, element);
@@ -121,9 +123,10 @@ public class CountingBloomFilter extends NativeLoader implements AutoCloseable {
     /**
      * Tests whether an element is present in the filter (subject to the specified false positive rate).
      *
+     * <b>notice</b>: In python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
+     *
      * @param element to test
      * @return true if element is in this filter.
-     * @apiNote In Python API, `add_int` is same as `addLong` in java, because python `int` type is `i64` in Rust
      */
     public boolean containsLong(long element) {
         return containsLong0(raw, element);
