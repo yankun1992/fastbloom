@@ -26,3 +26,5 @@ fastbloomjvm/native/.idea
 .vscode
 py_tests/.pytest_cache
 data
+
+library
