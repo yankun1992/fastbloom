@@ -7,6 +7,7 @@
 [![Benchmark](https://github.com/yankun1992/fastbloom/actions/workflows/benchmark.yml/badge.svg)](https://github.com/yankun1992/fastbloom/actions/workflows/benchmark.yml)
 [![Crates Latest Release](https://img.shields.io/crates/v/fastbloom-rs)](https://crates.io/crates/fastbloom-rs)
 [![PyPI Latest Release](https://img.shields.io/pypi/v/fastbloom-rs)](https://pypi.org/project/fastbloom-rs/)
+![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/io.github.yankun1992/fastbloom?server=https%3A%2F%2Fs01.oss.sonatype.org)
 
 使用 Rust 实现的  [bloom filter](#BloomFilter) | [counting bloom filter](#countingbloomfilter) Python 库及 Rust 库。
 
