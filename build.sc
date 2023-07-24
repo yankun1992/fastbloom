@@ -19,7 +19,7 @@ object ProjectInfo {
 
   def author = Seq("Yan Kun <yan_kun@icekredit.com>")
 
-  def version = "0.5.5-SNAPSHOT"
+  def version = "0.5.5"
 
   def buildTool = "mill"
 
