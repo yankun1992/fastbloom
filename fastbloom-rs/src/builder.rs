@@ -4,6 +4,7 @@ use crate::Membership;
 /// Builder for Bloom Filters.
 #[derive(Clone)]
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FilterBuilder {
     pub expected_elements: u64,
     pub false_positive_probability: f64,
