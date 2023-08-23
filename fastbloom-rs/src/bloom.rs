@@ -84,6 +84,7 @@ fn get_bit_indices(bit_set: &BloomBitVec, value: &[u8], m: u64, k: u64) -> Vec<u
 /// [Full text article](http://crystal.uta.edu/~mcguigan/cse6350/papers/Bloom.pdf)
 #[derive(Clone)]
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BloomFilter {
     config: FilterBuilder,
     bit_set: BloomBitVec,

@@ -10,6 +10,7 @@ fn get_usize_len() -> usize {
 /// bitmap only for bloom filter.
 #[derive(Debug)]
 #[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub(crate) struct BloomBitVec {
     /// Internal representation of the bit vector
     pub(crate) storage: Vec<usize>,
