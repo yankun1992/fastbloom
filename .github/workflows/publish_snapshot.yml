@@ -79,5 +79,5 @@ jobs:
       - run: ./millw -i __.publishArtifacts
       - run: ls -R library/native/
       - run: gpg --passphrase=$PGP_PASSPHRASE --no-tty --pinentry-mode loopback --batch --yes -a -b build.sc
-      - run: ./millw -d mill.scalalib.PublishModule/publishAll --publishArtifacts __.publishArtifacts --sonatypeCreds yankun1992:$SONATYPE_PASSWORD  --gpgArgs --passphrase=$PGP_PASSPHRASE,--no-tty,--pinentry-mode,loopback,--batch,--yes,-a,-b --sonatypeUri https://s01.oss.sonatype.org/service/local --sonatypeSnapshotUri https://s01.oss.sonatype.org/content/repositories/snapshots --readTimeout 1200000 --awaitTimeout 1200000 --signed true --release true
+      - run: ./millw -d mill.scalalib.PublishModule/publishAll --publishArtifacts __.publishArtifacts --sonatypeCreds yankun1992:$SONATYPE_PASSWORD  --gpgArgs --passphrase=$PGP_PASSPHRASE,--no-tty,--pinentry-mode,loopback,--batch,--yes,-a,-b --sonatypeUri https://s01.oss.sonatype.org/service/local --sonatypeSnapshotUri https://s01.oss.sonatype.org/content/repositories/snapshots --readTimeout 1200000 --awaitTimeout 1200000 --signed true --release true --stagingRelease false
       - run: rm gpg_key
