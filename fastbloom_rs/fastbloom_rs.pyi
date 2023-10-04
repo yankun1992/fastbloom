@@ -99,6 +99,9 @@ class PyBloomFilter(object):
     def clear(self):
         ...
 
+    def estimate_set_cardinality(self):
+        ...
+
     def get_hash_indices(self, element: bytes) -> Sequence[int]:
         ...
 

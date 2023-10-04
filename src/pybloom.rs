@@ -167,6 +167,10 @@ impl PyBloomFilter {
         Ok(self.bloomfilter.is_empty())
     }
 
+    pub fn estimate_set_cardinality(&self) -> PyResult<f64> {
+        Ok(self.bloomfilter.estimate_set_cardinality())
+    }
+
     pub fn union(&mut self, other: &PyBloomFilter) -> PyResult<bool> {
         Ok(self.bloomfilter.union(&other.bloomfilter))
     }

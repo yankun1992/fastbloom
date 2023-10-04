@@ -327,6 +327,14 @@ class BloomFilter(object):
         :return:
         """
         return self._py_bloom.is_empty()
+    
+    def estimate_set_cardinality(self) -> float:
+        """
+        Returns Returns estimated cardinality of the set
+
+        :return:
+        """
+        return self._py_bloom.estimate_set_cardinality()
 
     def union(self, other: "BloomFilter") -> bool:
         """

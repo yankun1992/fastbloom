@@ -372,6 +372,12 @@ impl BloomFilter {
         self.bit_set.is_empty()
     }
 
+    /// Returns estimated cardinality of the set
+    /// see [Scalable and Efficient Privacy Preserving Global Itemset Support Approximation Using Bloom Filters](https://inria.hal.science/hal-01284874/document) as reference
+    pub fn estimate_set_cardinality(&self) -> f64 {
+        (self.bit_set.count_zeros() as f64 / self.config.size as f64).ln() / (self.hashes() as f64 * (1.0 - 1.0/self.config.size as f64).ln())
+    }
+
     pub(crate) fn set_bit_vec(&mut self, bit_vec: BloomBitVec) {
         assert_eq!(self.config.size, bit_vec.nbits as u64);
         self.bit_set = bit_vec
