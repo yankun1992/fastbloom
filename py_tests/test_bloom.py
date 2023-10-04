@@ -66,8 +66,8 @@ def test_bloom_estimate_set_cardinality():
     bloom = BloomFilter(100_000_000, 0.01)
     for data in range(0, 10_000_000):
         bloom.add_int(data)
-
-    assert (bloom.estimate_set_cardinality() < 100_100_000) and (bloom.estimate_set_cardinality() > 99_900_000)
+        
+    assert (bloom.estimate_set_cardinality() < 10_100_000) and (bloom.estimate_set_cardinality() > 9_900_000)
 
 
 def test_bloom_op():
