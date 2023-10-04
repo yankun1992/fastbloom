@@ -97,11 +97,7 @@ impl BloomBitVec {
     }
 
     pub fn count_zeros(&self)->u32 {
-        let mut res:u32 = 0;
-        for m in self.storage.iter() {
-            res = res + m.count_zeros();
-        }
-        res
+        self.storage.iter().fold(0, |acc, x| acc + x.count_zeros())
     }
 
     pub fn clear(&mut self) {
