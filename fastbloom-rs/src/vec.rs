@@ -234,5 +234,8 @@ fn test_count_zeros() {
     vec.set(30);
     vec.set(38);
     println!("{:?}", vec);
+    #[cfg(target_pointer_width = "64")]
     assert_eq!(vec.count_zeros(), 253);
+    #[cfg(target_pointer_width = "32")]
+    assert_eq!(vec.count_zeros(), 125);
 }
