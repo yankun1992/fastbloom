@@ -1,6 +1,6 @@
 [package]
 name = "fastbloom-rs"
-version = "0.5.6"
+version = "0.5.7"
 edition = "2021"
 authors = ["Yan Kun <yan_kun_1992@foxmail.com>"]
 description = "Some fast bloom filter implemented by Rust for Python and Rust!"
