@@ -96,6 +96,9 @@ impl BloomBitVec {
         }
     }
 
+    pub fn count_zeros(&self)->u32 {
+        self.storage.iter().fold(0, |acc, x| acc + x.count_zeros())
+    }
 
     pub fn clear(&mut self) {
         self.storage.fill(0);
@@ -222,4 +225,17 @@ fn test_count_vec() {
     vec.increment(7);
 
     assert_eq!(1, vec.get(7))
+}
+
+#[test]
+fn test_count_zeros() {
+    let mut vec = BloomBitVec::new(4);
+    vec.set(37);
+    vec.set(30);
+    vec.set(38);
+    println!("{:?}", vec);
+    #[cfg(target_pointer_width = "64")]
+    assert_eq!(vec.count_zeros(), 253);
+    #[cfg(target_pointer_width = "32")]
+    assert_eq!(vec.count_zeros(), 125);
 }
