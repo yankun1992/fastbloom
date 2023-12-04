@@ -96,6 +96,12 @@ class PyBloomFilter(object):
     def get_int_array(self) -> Sequence[int]:
         ...
 
+    def save_to_file_with_hashes(self, path: str):
+        ...
+
+    def save_to_file(self, path: str):
+        ...
+
     def clear(self):
         ...
 
@@ -126,6 +132,14 @@ class PyBloomFilter(object):
 
     @staticmethod
     def from_int_array(array: Sequence[int], hashes: int) -> PyBloomFilter:
+        ...
+
+    @staticmethod
+    def from_file_with_hashes(path: str) -> PyBloomFilter:
+        ...
+
+    @staticmethod
+    def from_file(path: str, hashes: int) -> PyBloomFilter:
         ...
 
 

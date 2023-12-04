@@ -1,4 +1,5 @@
-use core::mem::size_of;
+use core::slice;
+use std::{fs::File, os::windows::fs::FileExt};
 
 use crate::builder::SUFFIX;
 
@@ -25,10 +26,42 @@ impl BloomBitVec {
             nbits: (slots * get_usize_len()) as u64,
         }
     }
+
     pub fn from_elem(slots: usize, bit: bool) -> Self {
         BloomBitVec {
             storage: vec![if bit { !0 } else { 0 }; slots],
             nbits: (slots * get_usize_len()) as u64,
+        }
+    }
+    
+    pub fn from_file(file: &mut File, seek: u64, bytes_len: u64) -> Self {
+        #[cfg(target_pointer_width = "64")]
+            let length = bytes_len / 8;
+        #[cfg(target_pointer_width = "32")]
+            let length = bytes_len / 4;
+        
+        let nbits = bytes_len * 8;
+
+        let mut storage = vec![0usize; length.try_into().unwrap()];
+        let ptr = storage.as_mut_ptr();
+        let buf = ptr as *mut u8;
+        let buf = unsafe {
+            slice::from_raw_parts_mut(buf, bytes_len.try_into().unwrap())
+        };
+
+        let mut cursor = seek;
+        let mut read = 0u64;
+
+        while read < bytes_len {
+            let size = file.seek_read(&mut buf[read as usize ..], cursor).unwrap() as u64;
+            read = read + size;
+            cursor += size;
+        }
+        
+
+        BloomBitVec {
+            storage,
+            nbits: nbits.try_into().unwrap()
         }
     }
 

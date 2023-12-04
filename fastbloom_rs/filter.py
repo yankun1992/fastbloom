@@ -312,6 +312,20 @@ class BloomFilter(object):
         """
         return self._py_bloom.get_int_array()
 
+    def save_to_file_with_hashes(self, path: str):
+        """
+        Save the bloom filter to file, and the first four bytes is hashes with 
+        big-endian, and the remaining bytes is underlying byte vector of the Bloom filter.
+        """
+        return self._py_bloom.save_to_file_with_hashes(path)
+    
+    def save_to_file(self, path: str):
+        """
+        Save the bloom filter to file, and the content of the file is underlying byte 
+        vector of the Bloom filter.
+        """
+        return self._py_bloom.save_to_file(path)
+
     def clear(self):
         """
         Removes all elements from the filter (i.e. resets all bits to zero).
@@ -388,6 +402,22 @@ class BloomFilter(object):
         py_bloom = PyBloomFilter.from_int_array(array, hashes)
         return BloomFilter(py_bloom)
 
+    @staticmethod
+    def from_file_with_hashes(path: str) -> PyBloomFilter:
+        """
+        Build a Bloom filter from file with first four bytes is hashes which is encode by big-endian.
+        The remaining is underlying byte vector of the Bloom filter.
+        """
+        py_bloom = PyBloomFilter.from_file_with_hashes(path)
+        return BloomFilter(py_bloom)
+
+    @staticmethod
+    def from_file(path: str, hashes: int) -> PyBloomFilter:
+        """
+        Build a Bloom filter from file. The content is underlying byte vector of the Bloom filter.
+        """
+        py_bloom = PyBloomFilter.from_file(path, hashes)
+        return BloomFilter(py_bloom)
 
 class CountingBloomFilter(object):
     """

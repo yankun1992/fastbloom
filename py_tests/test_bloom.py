@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from fastbloom_rs import BloomFilter, FilterBuilder
+import os
 
 
 def test_bloom_builder():
@@ -66,8 +67,9 @@ def test_bloom_estimate_set_cardinality():
     bloom = BloomFilter(100_000_000, 0.01)
     for data in range(0, 10_000_000):
         bloom.add_int(data)
-        
-    assert (bloom.estimate_set_cardinality() < 10_100_000) and (bloom.estimate_set_cardinality() > 9_900_000)
+
+    assert (bloom.estimate_set_cardinality() < 10_100_000) and (
+        bloom.estimate_set_cardinality() > 9_900_000)
 
 
 def test_bloom_op():
@@ -125,7 +127,8 @@ def test_hash_indices():
     bloom2 = BloomFilter(100_000_000, 0.01)
     bloom2.add_str("Yan Kun")
 
-    assert bloom.get_hash_indices(b'hello') == bloom2.get_hash_indices(b'hello')
+    assert bloom.get_hash_indices(
+        b'hello') == bloom2.get_hash_indices(b'hello')
 
     assert bloom.contains_hash_indices(bloom.get_hash_indices(b'hello'))
     assert bloom.contains_hash_indices(bloom.get_hash_indices(87))
@@ -142,14 +145,59 @@ def test_batch_check():
     bloom = BloomFilter(100_000_000, 0.01)
     inserts = [1, 2, 3, 4, 5, 6, 7, 9, 18, 68, 90, 100]
     checks = [1, 2, 3, 4, 5, 6, 7, 9, 18, 68, 90, 100, 190, 290, 390]
-    results = [True, True, True, True, True, True, True, True, True, True, True, True, False, False, False]
+    results = [True, True, True, True, True, True, True,
+               True, True, True, True, True, False, False, False]
 
     bloom.add_int_batch(inserts)
     contains = bloom.contains_int_batch(checks)
     assert contains == results
 
     bloom.add_str_batch(list(map(lambda x: str(x), inserts)))
-    assert bloom.contains_str_batch(list(map(lambda x: str(x), checks))) == results
+    assert bloom.contains_str_batch(
+        list(map(lambda x: str(x), checks))) == results
 
     bloom.add_bytes_batch(list(map(lambda x: bytes(x), inserts)))
-    assert bloom.contains_bytes_batch(list(map(lambda x: bytes(x), checks))) == results
+    assert bloom.contains_bytes_batch(
+        list(map(lambda x: bytes(x), checks))) == results
+
+
+def test_save_load_hashes_file():
+    bloom = BloomFilter(1_000_000_000, 0.0001)
+    bloom.add_bytes(b'hello')
+    bloom.add(87)
+
+    assert bloom.contains_bytes(b'hello')
+    assert bloom.contains_int(87)
+    assert not bloom.contains('world')
+
+    bloom.save_to_file_with_hashes('fst.bloom')
+    del bloom  # gc
+
+    bloom = BloomFilter.from_file_with_hashes('fst.bloom')
+    assert bloom.contains_bytes(b'hello')
+    assert bloom.contains_int(87)
+    assert not bloom.contains('world')
+
+    os.remove('fst.bloom')
+
+def test_save_load_file():
+    hashes = 0
+    bloom = BloomFilter(1_000_000_000, 0.01)
+    bloom.add_bytes(b'hello')
+    bloom.add(87)
+
+    hashes = bloom.hashes()
+
+    assert bloom.contains_bytes(b'hello')
+    assert bloom.contains_int(87)
+    assert not bloom.contains('world')
+
+    bloom.save_to_file('fst.bloom')
+    del bloom  # gc
+
+    bloom = BloomFilter.from_file('fst.bloom', hashes)
+    assert bloom.contains_bytes(b'hello')
+    assert bloom.contains_int(87)
+    assert not bloom.contains('world')
+
+    os.remove('fst.bloom')
