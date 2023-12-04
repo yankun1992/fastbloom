@@ -1,5 +1,5 @@
 use core::slice;
-use std::{fs::File, os::windows::fs::FileExt};
+use std::{fs::File, io::{Read, Seek}};
 
 use crate::builder::SUFFIX;
 
@@ -49,15 +49,8 @@ impl BloomBitVec {
             slice::from_raw_parts_mut(buf, bytes_len.try_into().unwrap())
         };
 
-        let mut cursor = seek;
-        let mut read = 0u64;
-
-        while read < bytes_len {
-            let size = file.seek_read(&mut buf[read as usize ..], cursor).unwrap() as u64;
-            read = read + size;
-            cursor += size;
-        }
-        
+        file.seek(std::io::SeekFrom::Start(seek)).unwrap();
+        file.read_exact(buf).unwrap();
 
         BloomBitVec {
             storage,
