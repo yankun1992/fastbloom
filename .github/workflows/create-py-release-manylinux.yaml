@@ -21,7 +21,7 @@ jobs:
       - name: publish
         uses: PyO3/maturin-action@v1
         env:
-          MATURIN_PASSWORD: ${{ secrets.PYPI_PASS }}
+          MATURIN_PYPI_TOKEN: ${{ secrets.MATURIN_PYPI_TOKEN }}
         with:
           rust-toolchain: stable
           target: ${{ matrix.target }}
@@ -42,7 +42,7 @@ jobs:
       - name: publish cross
         uses: PyO3/maturin-action@v1
         env:
-          MATURIN_PASSWORD: ${{ secrets.PYPI_PASS }}
+          MATURIN_PYPI_TOKEN: ${{ secrets.MATURIN_PYPI_TOKEN }}
         with:
           rust-toolchain: stable
           manylinux: auto

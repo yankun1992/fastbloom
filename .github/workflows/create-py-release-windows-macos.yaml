@@ -32,7 +32,7 @@ jobs:
       - name: Publish wheel
         shell: bash
         env:
-          MATURIN_PASSWORD: ${{ secrets.PYPI_PASS }}
+          MATURIN_PYPI_TOKEN: ${{ secrets.MATURIN_PYPI_TOKEN }}
         run: |
           export RUSTFLAGS='-C target-feature=+fxsr,+sse,+sse2,+sse3'
           maturin publish \
