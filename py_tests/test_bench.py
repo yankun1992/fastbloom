@@ -15,6 +15,8 @@ fast_filter = FastFilter(100_000_000, 0.001)
 
 data = [str(x) for x in range(1_000_000)]
 
+miss_data = [str(x + 2_000_000) for x in range(1_000_000)]
+
 
 def pybloom_insert():
     for ele in data:
@@ -23,6 +25,11 @@ def pybloom_insert():
 
 def pybloom_check():
     for ele in data:
+        check = ele in bloom
+
+
+def pybloom_miss_check():
+    for ele in miss_data:
         check = ele in bloom
 
 
@@ -40,8 +47,17 @@ def fastbloom_check():
         check = fast_filter.contains_str(ele)
 
 
+def fastbloom_miss_check():
+    for ele in miss_data:
+        check = fast_filter.contains_str(ele)
+
+
 def fastbloom_batch_check():
     fast_filter.contains_str_batch(data)
+
+
+def fastbloom_batch_miss_check():
+    fast_filter.contains_str_batch(miss_data)
 
 
 def test_bench():
@@ -59,8 +75,17 @@ def test_bench():
     res = timeit.timeit(pybloom_check, number=1)
     print("pybloom_check\ttimeit\t" + str(res))
 
+    res = timeit.timeit(pybloom_miss_check, number=1)
+    print("pybloom_miss_check\ttimeit\t" + str(res))
+
     res = timeit.timeit(fastbloom_check, number=1)
     print("fastbloom_check\ttimeit\t" + str(res))
 
+    res = timeit.timeit(fastbloom_miss_check, number=1)
+    print("fastbloom_miss_check\ttimeit\t" + str(res))
+
     res = timeit.timeit(fastbloom_batch_check, number=1)
     print("fastbloom_batch_check\ttimeit\t" + str(res))
+
+    res = timeit.timeit(fastbloom_batch_miss_check, number=1)
+    print("fastbloom_batch_miss_check\ttimeit\t" + str(res))

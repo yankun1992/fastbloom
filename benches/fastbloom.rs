@@ -2,14 +2,15 @@ use std::hash::{Hash, Hasher};
 use std::ops::Range;
 
 use crc32fast::Hasher as CRCHasher;
-use criterion::{black_box, Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
+use std::hint::black_box;
 use fastmurmur3::murmur3_x64_128;
 use fxhash::{FxHasher64, hash64};
-use getrandom::getrandom;
+use getrandom;
 use rand::Rng;
 use rand::rngs::ThreadRng;
 use siphasher::sip::SipHasher13;
-use twox_hash::{Xxh3Hash64, XxHash64};
+use twox_hash::{XxHash3_64, XxHash64};
 use xxhash_rust::const_xxh3::xxh3_64 as const_xxh3;
 use xxhash_rust::xxh3::{xxh3_64, xxh3_64_with_seed};
 
@@ -40,6 +41,12 @@ fn bloom_hash<T>(hashes: &mut [u64; 2], item: &T, k_i: u32, sips: &mut [SipHashe
 fn bloom_add_all_test(filter: &mut BloomFilter, inputs: &[String]) {
     for input in inputs {
         filter.add(input.as_bytes());
+    }
+}
+
+fn bloom_contains_all_test(filter: &BloomFilter, inputs: &[String]) {
+    for ele in inputs {
+        filter.contains(ele.as_bytes());
     }
 }
 
@@ -89,7 +96,7 @@ fn hash_bench(c: &mut Criterion) {
     }));
 
     let mut seed = [0u8; 32];
-    getrandom(&mut seed).unwrap();
+    getrandom::fill(&mut seed).unwrap();
     let mut k1 = [0u8; 16];
     let mut k2 = [0u8; 16];
     k1.copy_from_slice(&seed[0..16]);
@@ -107,7 +114,7 @@ fn hash_bench(c: &mut Criterion) {
     }));
 
     c.bench_function("xxh3", |b| b.iter(|| {
-        let mut xxh3 = Xxh3Hash64::default();
+        let mut xxh3 = XxHash3_64::default();
         hello.hash(&mut xxh3);
         xxh3.finish();
     }));
@@ -136,6 +143,7 @@ fn bound_check_bench(c: &mut Criterion) {
 
 fn bloom_add_bench(c: &mut Criterion) {
     let inputs: Vec<String> = (1..1_000_000).map(|n| { n.to_string() }).collect();
+    let miss_inputs: Vec<String> = (1..1_000_000).map(|n| { (n + 2_000_000).to_string() }).collect();
     let items_count = 100_000_000;
 
     let hello = "hellohellohellohello".to_string();
@@ -148,6 +156,8 @@ fn bloom_add_bench(c: &mut Criterion) {
     c.bench_function("random_test", |b| b.iter(|| random_test(&mut random, &range)));
     c.bench_function("bloom_add_random_test", |b| b.iter(|| bloom_add_random_test(&mut filter, &mut random, &range)));
     c.bench_function("bloom_add_all_test", |b| b.iter(|| bloom_add_all_test(&mut filter, &inputs[..])));
+    c.bench_function("bloom_contains_all_test", |b| b.iter(|| bloom_contains_all_test(&filter, &inputs[..])));
+    c.bench_function("bloom_contains_all_miss_test", |b| b.iter(|| bloom_contains_all_test(&filter, &miss_inputs[..])));
 
     c.bench_function("bloom_contains_test", |b| b.iter(|| filter.contains(black_box(hello.as_bytes()))));
     c.bench_function("bloom_not_contains_test", |b| b.iter(|| filter.contains(black_box(b"hellohellohello"))));

@@ -5,7 +5,7 @@ use crate::pybloom::{PyBloomFilter, PyFilterBuilder, PyCountingBloomFilter};
 pub mod pybloom;
 
 #[pymodule]
-fn fastbloom_rs(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn fastbloom_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyBloomFilter>().unwrap();
     m.add_class::<PyFilterBuilder>().unwrap();
     m.add_class::<PyCountingBloomFilter>().unwrap();

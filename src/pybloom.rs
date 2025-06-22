@@ -1,5 +1,5 @@
-use pyo3::prelude::*;
-use pyo3::types::PyBytes;
+use pyo3::{prelude::*, types::PyList};
+use pyo3::types::{PyBytes, PyString};
 
 use fastbloom_rs::{BloomFilter, CountingBloomFilter, Deletable, FilterBuilder, Hashes, Membership};
 
@@ -72,31 +72,34 @@ impl PyBloomFilter {
         };
     }
 
-    pub fn add_str(&mut self, element: &str) {
-        self.bloomfilter.add(element.as_bytes());
+    pub fn add_str(&mut self, element: &Bound<'_, PyString>) {
+        self.bloomfilter.add(element.encode_utf8().unwrap().as_bytes());
     }
 
-    pub fn add_str_if_not_contains(&mut self, element: &str) -> bool {
-        self.bloomfilter.add_if_not_contains(element.as_bytes())
+    pub fn add_str_if_not_contains(&mut self, element:&Bound<'_, PyString>) -> bool {
+        self.bloomfilter.add_if_not_contains(element.encode_utf8().unwrap().as_bytes())
     }
 
-    pub fn add_str_batch(&mut self, array: Vec<&str>) {
-        for x in array {
-            self.bloomfilter.add(x.as_bytes())
+    pub fn add_str_batch(&mut self, array: &Bound<'_, PyList>) { //  Vec<&str>
+        for x in array.iter() {
+            let s = x.downcast::<PyString>().unwrap();
+            let y = s.encode_utf8().unwrap();
+            self.bloomfilter.add(y.as_bytes());
         }
     }
 
-    pub fn add_bytes(&mut self, bts: &PyBytes) {
+    pub fn add_bytes(&mut self, bts: &Bound<'_, PyBytes>) {
         self.bloomfilter.add(bts.as_bytes());
     }
 
-    pub fn add_bytes_batch(&mut self, elements: Vec<&PyBytes>) {
-        for element in elements {
-            self.bloomfilter.add(element.as_bytes())
+    pub fn add_bytes_batch(&mut self, elements: &Bound<'_, PyList>) { // Vec<&PyBytes>
+        for element in elements.iter() {
+            let x = element.extract::<&[u8]>().unwrap();
+            self.bloomfilter.add(x)
         }
     }
 
-    pub fn add_bytes_if_not_contains(&mut self, bts: &PyBytes) -> bool {
+    pub fn add_bytes_if_not_contains(&mut self, bts: &Bound<'_, PyBytes>) -> bool {
         self.bloomfilter.add_if_not_contains(bts.as_bytes())
     }
 
@@ -113,27 +116,29 @@ impl PyBloomFilter {
         Ok(res)
     }
 
-    pub fn contains_str(&mut self, element: &str) -> bool {
-        self.bloomfilter.contains(element.as_bytes())
+    pub fn contains_str(&mut self, element:  &Bound<'_, PyString>) -> bool {
+        self.bloomfilter.contains(element.encode_utf8().unwrap().as_bytes())
     }
 
-    pub fn contains_str_batch(&mut self, elements: Vec<&str>) -> PyResult<Vec<bool>> {
+    pub fn contains_str_batch(&mut self, elements: &Bound<'_, PyList>) -> PyResult<Vec<bool>> { //  Vec<&str>
         let mut res = Vec::<bool>::with_capacity(elements.len());
-        for ele in elements {
-            let value = self.bloomfilter.contains(ele.as_bytes());
+        for ele in elements.iter() {
+            let x = ele.downcast::<PyString>().unwrap();
+            let value = self.bloomfilter.contains(x.encode_utf8().unwrap().as_bytes());
             res.push(value);
         }
         Ok(res)
     }
 
-    pub fn contains_bytes(&self, bts: &PyBytes) -> bool {
+    pub fn contains_bytes(&self, bts: &Bound<'_, PyBytes>) -> bool {
         self.bloomfilter.contains(bts.as_bytes())
     }
 
-    pub fn contains_bytes_batch(&self, elements: Vec<&PyBytes>) -> PyResult<Vec<bool>> {
+    pub fn contains_bytes_batch(&self, elements:&Bound<'_, PyList>) -> PyResult<Vec<bool>> { //  Vec<&PyBytes>
         let mut res = Vec::<bool>::with_capacity(elements.len());
         for ele in elements {
-            let value = self.bloomfilter.contains(ele.as_bytes());
+            let x = ele.extract::<&[u8]>().unwrap();
+            let value = self.bloomfilter.contains(x);
             res.push(value);
         }
         Ok(res)
@@ -195,7 +200,7 @@ impl PyBloomFilter {
         Ok(self.bloomfilter.get_hash_indices(element.as_bytes()))
     }
 
-    pub fn get_hash_indices(&self, bts: &PyBytes) -> PyResult<Vec<u64>> {
+    pub fn get_hash_indices(&self, bts: &Bound<'_, PyBytes>) -> PyResult<Vec<u64>> {
         Ok(self.bloomfilter.get_hash_indices(bts.as_bytes()))
     }
 
@@ -246,8 +251,9 @@ impl PyCountingBloomFilter {
         self.counting_bloom_filter.add(element.as_bytes());
     }
 
-    pub fn add_str_batch(&mut self, array: Vec<&str>) {
-        for x in array {
+    pub fn add_str_batch(&mut self, array: &Bound<'_, PyList>) { // Vec<&str>
+        for x in array.iter() {
+            let x = x.extract::<String>().unwrap();
             self.counting_bloom_filter.add(x.as_bytes())
         }
     }
@@ -256,17 +262,17 @@ impl PyCountingBloomFilter {
         self.counting_bloom_filter.remove(element.as_bytes());
     }
 
-    pub fn add_bytes(&mut self, bts: &PyBytes) {
+    pub fn add_bytes(&mut self, bts: &Bound<'_, PyBytes>) {
         self.counting_bloom_filter.add(bts.as_bytes());
     }
 
-    pub fn add_bytes_batch(&mut self, elements: Vec<&PyBytes>) {
-        for element in elements {
-            self.counting_bloom_filter.add(element.as_bytes())
+    pub fn add_bytes_batch(&mut self, elements: &Bound<'_, PyList> ) { // Vec<&PyBytes>
+        for element in elements.iter() {
+            self.counting_bloom_filter.add(element.extract::<&[u8]>().unwrap())
         }
     }
 
-    pub fn remove_bytes(&mut self, bts: &PyBytes) {
+    pub fn remove_bytes(&mut self, bts: &Bound<'_, PyBytes>) {
         self.counting_bloom_filter.remove(bts.as_bytes());
     }
 
@@ -286,22 +292,22 @@ impl PyCountingBloomFilter {
         self.counting_bloom_filter.contains(element.as_bytes())
     }
 
-    pub fn contains_str_batch(&mut self, elements: Vec<&str>) -> PyResult<Vec<bool>> {
+    pub fn contains_str_batch(&mut self, elements: &Bound<'_, PyList>) -> PyResult<Vec<bool>> { // Vec<&str>
         let mut res = Vec::<bool>::with_capacity(elements.len());
-        for ele in elements {
-            res.push(self.counting_bloom_filter.contains(ele.as_bytes()));
+        for ele in elements.iter() {
+            res.push(self.counting_bloom_filter.contains(ele.extract::<String>().unwrap().as_bytes()));
         }
         Ok(res)
     }
 
-    pub fn contains_bytes(&self, bts: &PyBytes) -> bool {
+    pub fn contains_bytes(&self, bts: &Bound<'_, PyBytes>) -> bool {
         self.counting_bloom_filter.contains(bts.as_bytes())
     }
 
-    pub fn contains_bytes_batch(&self, elements: Vec<&PyBytes>) -> PyResult<Vec<bool>> {
+    pub fn contains_bytes_batch(&self, elements: &Bound<'_, PyList>) -> PyResult<Vec<bool>> { // Vec<&PyBytes>
         let mut res = Vec::<bool>::with_capacity(elements.len());
-        for ele in elements {
-            res.push(self.counting_bloom_filter.contains(ele.as_bytes()));
+        for ele in elements.iter() {
+            res.push(self.counting_bloom_filter.contains(ele.extract::<&[u8]>().unwrap()));
         }
         Ok(res)
     }
@@ -338,7 +344,7 @@ impl PyCountingBloomFilter {
         Ok(self.counting_bloom_filter.get_hash_indices(element.as_bytes()))
     }
 
-    pub fn get_hash_indices(&self, bts: &PyBytes) -> PyResult<Vec<u64>> {
+    pub fn get_hash_indices(&self, bts: &Bound<'_, PyBytes>) -> PyResult<Vec<u64>> {
         Ok(self.counting_bloom_filter.get_hash_indices(bts.as_bytes()))
     }
 
@@ -350,7 +356,7 @@ impl PyCountingBloomFilter {
         Ok(self.counting_bloom_filter.estimate_count(element.as_bytes()) as u32)
     }
 
-    pub fn estimate_count(&self, element: &PyBytes) -> PyResult<u32> {
+    pub fn estimate_count(&self, element: &Bound<'_, PyBytes>) -> PyResult<u32> {
         Ok(self.counting_bloom_filter.estimate_count(element.as_bytes()) as u32)
     }
 

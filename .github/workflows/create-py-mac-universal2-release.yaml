@@ -34,7 +34,7 @@ jobs:
         env:
           MATURIN_PASSWORD: ${{ secrets.PYPI_PASS }}
         with:
-          maturin-version: 0.12.7
+          maturin-version: 1.8.7
           command: publish
           args: --target aarch64-apple-darwin --no-sdist --skip-existing -o wheels -i python -u yankun
 

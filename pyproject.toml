@@ -1,5 +1,6 @@
 [project]
 name = "fastbloom_rs"
+dynamic = ["version"]
 classifiers = ["Programming Language :: Python"]
 requires-python = ">=3.7"
 license = { file = "LICENSE" }
@@ -13,7 +14,7 @@ maintainers = [
 
 [project.optional-dependencies]
 test = [
-    "pytest <= 7.1.1",
+    "pytest <= 7.1.2",
     "pybloom_live"
 ]
 
@@ -23,7 +24,7 @@ documentation = "https://github.com/yankun1992/fastbloom/blob/main/README.md"
 repository = "https://github.com/yankun1992/fastbloom"
 
 [build-system]
-requires = ["maturin>=0.12,<0.13"]
+requires = ["maturin==1.8.7"]
 build-backend = "maturin"
 
 [tool.maturin]
