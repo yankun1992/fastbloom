@@ -13,7 +13,7 @@ env:
 jobs:
   test:
     name: Build and test Java
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
