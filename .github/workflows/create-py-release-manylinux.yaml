@@ -14,19 +14,31 @@ jobs:
         target: [ x86_64 ]
     steps:
       - uses: actions/checkout@v3
+      - name: Install rust stable
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
       - uses: actions/setup-python@v5
         with:
           python-version: 3.7
-      - name: publish
-        uses: PyO3/maturin-action@v1
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install maturin==1.8.7
+      - name: Publish wheel
+        shell: bash
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.MATURIN_PYPI_TOKEN }}
-        with:
-          rust-toolchain: stable
-          target: ${{ matrix.target }}
-          manylinux: auto
-          command: publish
-          args: --no-sdist --skip-existing -o wheels -i python -u yankun
+        run: |
+          export RUSTFLAGS='-C target-feature=+fxsr,+sse,+sse2,+sse3'
+          maturin publish \
+          --no-sdist \
+          --skip-existing \
+          -o wheels \
+          -i python \
+          --username yankun
   linux-cross:
     name: PyPi (cross)
     runs-on: ubuntu-22.04
