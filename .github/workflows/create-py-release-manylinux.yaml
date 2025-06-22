@@ -8,7 +8,7 @@ on:
 jobs:
   linux:
     name: PyPi (x86_64)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target: [ x86_64 ]
@@ -30,7 +30,7 @@ jobs:
           args: --no-sdist --skip-existing -o wheels -i python -u yankun
   linux-cross:
     name: PyPi (cross)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target: [ aarch64, armv7, ppc64le, ppc64 ]
