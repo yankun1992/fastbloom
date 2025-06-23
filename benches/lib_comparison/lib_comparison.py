@@ -17,6 +17,7 @@ import gc
 import psutil
 import os
 import statistics
+from datetime import datetime
 from typing import List, Dict, Any, Tuple, Protocol
 from dataclasses import dataclass
 from pathlib import Path
@@ -447,6 +448,11 @@ def print_benchmark_results(results: List[BenchmarkResult]) -> None:
 )
 @click.option("--seed", default=42, help="Random seed for reproducible results")
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose logging")
+@click.option(
+    "--log-file",
+    default=None,
+    help="Log file path (default: benchmark_YYYYMMDD_HHMMSS.log)",
+)
 def main(
     capacities: str,
     fpr: str,
@@ -458,6 +464,7 @@ def main(
     libraries: str,
     seed: int,
     verbose: bool,
+    log_file: str,
 ) -> None:
     """
     Benchmark bloom filter implementations.
@@ -470,7 +477,25 @@ def main(
     # Configure logging
     logger.remove()
     log_level = "DEBUG" if verbose else "INFO"
+    
+    # Add console logging
     logger.add(lambda msg: click.echo(msg, err=True), level=log_level)
+    
+    # Add file logging with default filename based on timestamp
+    if log_file is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_file = f"benchmark_{timestamp}.log"
+    
+    log_file_path = Path(log_file)
+    logger.add(
+        log_file_path,
+        level=log_level,
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
+        rotation="10 MB",
+        retention="7 days",
+    )
+    
+    logger.info(f"Logging to file: {log_file_path.absolute()}")
 
     # Parse parameters
     try:
