@@ -311,17 +311,20 @@ def get_library_version(library: str) -> str:
     try:
         if library == "pyprobables":
             import probables
-            return getattr(probables, '__version__', 'unknown')
+
+            return getattr(probables, "__version__", "unknown")
         elif library == "fastbloom-rs":
             import fastbloom_rs
-            return getattr(fastbloom_rs, '__version__', 'unknown')
+
+            return getattr(fastbloom_rs, "__version__", "unknown")
         elif library == "pybloomfilter3":
             import pybloomfilter
-            return getattr(pybloomfilter, '__version__', 'unknown')
+
+            return getattr(pybloomfilter, "__version__", "unknown")
         else:
-            return 'unknown'
+            return "unknown"
     except Exception:
-        return 'unknown'
+        return "unknown"
 
 
 def get_available_libraries() -> List[str]:
