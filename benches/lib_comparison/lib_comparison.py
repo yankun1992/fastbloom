@@ -119,7 +119,13 @@ class BenchmarkResult:
 class BloomFilterWrapper:
     """Wrapper to provide common interface for different bloom filter implementations."""
 
-    def __init__(self, library: str, capacity: int, false_positive_rate: float, data_type: str = "bytes"):
+    def __init__(
+        self,
+        library: str,
+        capacity: int,
+        false_positive_rate: float,
+        data_type: str = "bytes",
+    ):
         self.library = library
         self.capacity = capacity
         self.false_positive_rate = false_positive_rate
@@ -211,10 +217,7 @@ def generate_random_strings(count: int, length: int, seed: int) -> List[str]:
     random.seed(seed)
     characters = string.ascii_letters + string.digits
 
-    return [
-        "".join(random.choices(characters, k=length))
-        for _ in range(count)
-    ]
+    return ["".join(random.choices(characters, k=length)) for _ in range(count)]
 
 
 def time_operation(func, *args, **kwargs) -> Tuple[Any, float]:
@@ -246,7 +249,9 @@ def benchmark_bloom_filter(
 
     # Warmup runs to stabilize performance
     for _ in range(config.num_warmup_runs):
-        test_filter = BloomFilterWrapper(library, capacity, false_positive_rate, data_type)
+        test_filter = BloomFilterWrapper(
+            library, capacity, false_positive_rate, data_type
+        )
         for item in test_items[:100]:  # Small subset for warmup
             test_filter.add(item)
         for item in lookup_items[:100]:
@@ -258,7 +263,9 @@ def benchmark_bloom_filter(
     creation_times = []
     for _ in range(config.num_benchmark_runs):
         _, creation_time = time_operation(
-            lambda: BloomFilterWrapper(library, capacity, false_positive_rate, data_type)
+            lambda: BloomFilterWrapper(
+                library, capacity, false_positive_rate, data_type
+            )
         )
         creation_times.append(creation_time)
 
@@ -271,7 +278,9 @@ def benchmark_bloom_filter(
 
     for _ in range(config.num_benchmark_runs):
         # Create filter outside of timing
-        test_filter = BloomFilterWrapper(library, capacity, false_positive_rate, data_type)
+        test_filter = BloomFilterWrapper(
+            library, capacity, false_positive_rate, data_type
+        )
 
         # Time only the add operations
         _, add_time = time_operation(
@@ -409,7 +418,9 @@ def print_benchmark_results(results: List[BenchmarkResult]) -> None:
         print("-" * 130)
 
         # Sort by library, then data type, then total time
-        config_results.sort(key=lambda x: (x.library, x.data_type, x.creation_time + x.add_time))
+        config_results.sort(
+            key=lambda x: (x.library, x.data_type, x.creation_time + x.add_time)
+        )
 
         for result in config_results:
             actual_fpr = (
@@ -435,8 +446,12 @@ def print_benchmark_results(results: List[BenchmarkResult]) -> None:
     print("=" * 120)
 
     for library in sorted(set(r.library for r in results)):
-        for data_type in sorted(set(r.data_type for r in results if r.library == library)):
-            lib_results = [r for r in results if r.library == library and r.data_type == data_type]
+        for data_type in sorted(
+            set(r.data_type for r in results if r.library == library)
+        ):
+            lib_results = [
+                r for r in results if r.library == library and r.data_type == data_type
+            ]
             if lib_results:
                 avg_creation_time = sum(r.creation_time for r in lib_results) / len(
                     lib_results
@@ -453,7 +468,9 @@ def print_benchmark_results(results: List[BenchmarkResult]) -> None:
                 median_creation_time = statistics.median(
                     r.creation_time_median for r in lib_results
                 )
-                median_add_time = statistics.median(r.add_time_median for r in lib_results)
+                median_add_time = statistics.median(
+                    r.add_time_median for r in lib_results
+                )
                 median_hit_time = statistics.median(
                     r.lookup_hit_time_median for r in lib_results
                 )
@@ -614,8 +631,12 @@ def main(
     test_items_strings = generate_random_strings(max_items, config.item_length, seed)
 
     # Generate separate items for lookup tests
-    lookup_items_bytes = generate_random_bytes(config.num_lookups, config.item_length, seed + 1)
-    lookup_items_strings = generate_random_strings(config.num_lookups, config.item_length, seed + 1)
+    lookup_items_bytes = generate_random_bytes(
+        config.num_lookups, config.item_length, seed + 1
+    )
+    lookup_items_strings = generate_random_strings(
+        config.num_lookups, config.item_length, seed + 1
+    )
 
     # Define data types to test
     data_types = ["bytes", "string"]
@@ -623,7 +644,11 @@ def main(
     # Run benchmarks
     all_results = []
     total_tests = (
-        len(test_libraries) * len(data_types) * len(capacity_list) * len(fpr_list) * len(items_list)
+        len(test_libraries)
+        * len(data_types)
+        * len(capacity_list)
+        * len(fpr_list)
+        * len(items_list)
     )
     current_test = 0
 
@@ -656,7 +681,9 @@ def main(
                             all_results.append(result)
 
                         except Exception as e:
-                            logger.error(f"Error benchmarking {library} ({data_type}): {e}")
+                            logger.error(
+                                f"Error benchmarking {library} ({data_type}): {e}"
+                            )
                             continue
 
     # Print results
