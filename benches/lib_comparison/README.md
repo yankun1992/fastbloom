@@ -90,19 +90,6 @@ The benchmark produces:
 - **Memory Usage**: Approximate memory consumption in MB
 - **FP Rate (actual)**: Measured false positive rate vs theoretical rate
 
-## Example Output
-
-```
-Configuration: Capacity=100,000, FPR=0.01, Items=10,000
-------------------------------------------------------------------------------
-Library         Create Time  Add Time     Hit Time     Miss Time    Memory     FP Rate   
-                (seconds)    (seconds)    (seconds)    (seconds)    (MB)       (actual)  
-------------------------------------------------------------------------------
-fastbloom-rs    0.000012     0.0156       0.000891     0.000923     1.2        0.0098    
-pyprobables     0.000089     0.1234       0.001234     0.001456     2.1        0.0102    
-pybloomfilter3  0.000045     0.0789       0.001012     0.001087     1.8        0.0095    
-```
-
 ## Performance Considerations
 
 - The benchmark uses warmup runs to stabilize measurements
