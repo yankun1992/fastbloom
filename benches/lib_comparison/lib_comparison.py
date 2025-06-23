@@ -91,6 +91,7 @@ class BenchmarkResult:
 
     library: str
     library_version: str
+    data_type: str  # "bytes" or "string"
     capacity: int
     false_positive_rate: float
     num_items: int
@@ -118,10 +119,11 @@ class BenchmarkResult:
 class BloomFilterWrapper:
     """Wrapper to provide common interface for different bloom filter implementations."""
 
-    def __init__(self, library: str, capacity: int, false_positive_rate: float):
+    def __init__(self, library: str, capacity: int, false_positive_rate: float, data_type: str = "bytes"):
         self.library = library
         self.capacity = capacity
         self.false_positive_rate = false_positive_rate
+        self.data_type = data_type  # "bytes" or "string"
         self._filter = self._create_filter()
 
     def _create_filter(self):
@@ -146,23 +148,45 @@ class BloomFilterWrapper:
         else:
             raise ValueError(f"Unknown library: {self.library}")
 
-    def add(self, item: bytes) -> None:
+    def add(self, item) -> None:
         """Add an item to the bloom filter."""
         if self.library == "pyprobables":
-            self._filter.add(item.decode("utf-8"))
+            # pyprobables always expects strings
+            if self.data_type == "bytes":
+                self._filter.add(item.decode("utf-8"))
+            else:
+                self._filter.add(item)
         elif self.library == "fastbloom-rs":
-            self._filter.add_bytes(item)
+            if self.data_type == "bytes":
+                self._filter.add_bytes(item)
+            else:
+                self._filter.add_str(item)
         elif self.library == "pybloomfilter3":
-            self._filter.add(item.decode("utf-8"))
+            # pybloomfilter3 always expects strings
+            if self.data_type == "bytes":
+                self._filter.add(item.decode("utf-8"))
+            else:
+                self._filter.add(item)
 
-    def contains(self, item: bytes) -> bool:
+    def contains(self, item) -> bool:
         """Check if an item is in the bloom filter."""
         if self.library == "pyprobables":
-            return self._filter.check(item.decode("utf-8"))
+            # pyprobables always expects strings
+            if self.data_type == "bytes":
+                return self._filter.check(item.decode("utf-8"))
+            else:
+                return self._filter.check(item)
         elif self.library == "fastbloom-rs":
-            return self._filter.contains_bytes(item)
+            if self.data_type == "bytes":
+                return self._filter.contains_bytes(item)
+            else:
+                return self._filter.contains_str(item)
         elif self.library == "pybloomfilter3":
-            return item.decode("utf-8") in self._filter
+            # pybloomfilter3 always expects strings
+            if self.data_type == "bytes":
+                return item.decode("utf-8") in self._filter
+            else:
+                return item in self._filter
 
     def get_memory_usage(self) -> float:
         """Get approximate memory usage in MB."""
@@ -182,6 +206,17 @@ def generate_random_bytes(count: int, length: int, seed: int) -> List[bytes]:
     ]
 
 
+def generate_random_strings(count: int, length: int, seed: int) -> List[str]:
+    """Generate a list of random strings for testing."""
+    random.seed(seed)
+    characters = string.ascii_letters + string.digits
+
+    return [
+        "".join(random.choices(characters, k=length))
+        for _ in range(count)
+    ]
+
+
 def time_operation(func, *args, **kwargs) -> Tuple[Any, float]:
     """Time an operation and return result and elapsed time."""
     start_time = time.perf_counter()
@@ -192,16 +227,17 @@ def time_operation(func, *args, **kwargs) -> Tuple[Any, float]:
 
 def benchmark_bloom_filter(
     library: str,
+    data_type: str,
     capacity: int,
     false_positive_rate: float,
-    test_items: List[bytes],
-    lookup_items: List[bytes],
+    test_items: List,
+    lookup_items: List,
     config: BenchmarkConfig,
 ) -> BenchmarkResult:
     """Benchmark a single bloom filter configuration."""
 
     logger.info(
-        f"Benchmarking {library} - capacity: {capacity}, fpr: {false_positive_rate}"
+        f"Benchmarking {library} ({data_type}) - capacity: {capacity}, fpr: {false_positive_rate}"
     )
 
     # Measure memory before operations
@@ -210,7 +246,7 @@ def benchmark_bloom_filter(
 
     # Warmup runs to stabilize performance
     for _ in range(config.num_warmup_runs):
-        test_filter = BloomFilterWrapper(library, capacity, false_positive_rate)
+        test_filter = BloomFilterWrapper(library, capacity, false_positive_rate, data_type)
         for item in test_items[:100]:  # Small subset for warmup
             test_filter.add(item)
         for item in lookup_items[:100]:
@@ -222,7 +258,7 @@ def benchmark_bloom_filter(
     creation_times = []
     for _ in range(config.num_benchmark_runs):
         _, creation_time = time_operation(
-            lambda: BloomFilterWrapper(library, capacity, false_positive_rate)
+            lambda: BloomFilterWrapper(library, capacity, false_positive_rate, data_type)
         )
         creation_times.append(creation_time)
 
@@ -235,7 +271,7 @@ def benchmark_bloom_filter(
 
     for _ in range(config.num_benchmark_runs):
         # Create filter outside of timing
-        test_filter = BloomFilterWrapper(library, capacity, false_positive_rate)
+        test_filter = BloomFilterWrapper(library, capacity, false_positive_rate, data_type)
 
         # Time only the add operations
         _, add_time = time_operation(
@@ -289,6 +325,7 @@ def benchmark_bloom_filter(
     return BenchmarkResult(
         library=library,
         library_version=get_library_version(library),
+        data_type=data_type,
         capacity=capacity,
         false_positive_rate=false_positive_rate,
         num_items=len(test_items),
@@ -354,25 +391,25 @@ def print_benchmark_results(results: List[BenchmarkResult]) -> None:
             configs[key] = []
         configs[key].append(result)
 
-    print("\n" + "=" * 100)
+    print("\n" + "=" * 120)
     print("BLOOM FILTER PERFORMANCE BENCHMARK RESULTS")
-    print("=" * 100)
+    print("=" * 120)
 
     for (capacity, fpr, num_items), config_results in configs.items():
         print(f"\nConfiguration: Capacity={capacity:,}, FPR={fpr}, Items={num_items:,}")
-        print("-" * 110)
+        print("-" * 130)
 
         # Table header
         print(
-            f"{'Library':<15} {'Create Time':<12} {'Add Time':<12} {'Hit Time':<12} {'Miss Time':<12} {'Memory':<10} {'FP Rate':<10}"
+            f"{'Library':<15} {'Data Type':<10} {'Create Time':<12} {'Add Time':<12} {'Hit Time':<12} {'Miss Time':<12} {'Memory':<10} {'FP Rate':<10}"
         )
         print(
-            f"{'':.<15} {'(seconds)':<12} {'(seconds)':<12} {'(seconds)':<12} {'(seconds)':<12} {'(MB)':<10} {'(actual)':<10}"
+            f"{'':.<15} {'':.<10} {'(seconds)':<12} {'(seconds)':<12} {'(seconds)':<12} {'(seconds)':<12} {'(MB)':<10} {'(actual)':<10}"
         )
-        print("-" * 110)
+        print("-" * 130)
 
-        # Sort by total time (creation + add) for easy comparison
-        config_results.sort(key=lambda x: x.creation_time + x.add_time)
+        # Sort by library, then data type, then total time
+        config_results.sort(key=lambda x: (x.library, x.data_type, x.creation_time + x.add_time))
 
         for result in config_results:
             actual_fpr = (
@@ -383,6 +420,7 @@ def print_benchmark_results(results: List[BenchmarkResult]) -> None:
 
             print(
                 f"{result.library:<15} "
+                f"{result.data_type:<10} "
                 f"{result.creation_time:<12.6f} "
                 f"{result.add_time:<12.4f} "
                 f"{result.lookup_hit_time:<12.6f} "
@@ -392,53 +430,54 @@ def print_benchmark_results(results: List[BenchmarkResult]) -> None:
             )
 
     # Summary statistics
-    print("\n" + "=" * 100)
+    print("\n" + "=" * 120)
     print("SUMMARY")
-    print("=" * 100)
+    print("=" * 120)
 
     for library in sorted(set(r.library for r in results)):
-        lib_results = [r for r in results if r.library == library]
-        if lib_results:
-            avg_creation_time = sum(r.creation_time for r in lib_results) / len(
-                lib_results
-            )
-            avg_add_time = sum(r.add_time for r in lib_results) / len(lib_results)
-            avg_hit_time = sum(r.lookup_hit_time for r in lib_results) / len(
-                lib_results
-            )
-            avg_miss_time = sum(r.lookup_miss_time for r in lib_results) / len(
-                lib_results
-            )
-            avg_memory = sum(r.memory_usage for r in lib_results) / len(lib_results)
+        for data_type in sorted(set(r.data_type for r in results if r.library == library)):
+            lib_results = [r for r in results if r.library == library and r.data_type == data_type]
+            if lib_results:
+                avg_creation_time = sum(r.creation_time for r in lib_results) / len(
+                    lib_results
+                )
+                avg_add_time = sum(r.add_time for r in lib_results) / len(lib_results)
+                avg_hit_time = sum(r.lookup_hit_time for r in lib_results) / len(
+                    lib_results
+                )
+                avg_miss_time = sum(r.lookup_miss_time for r in lib_results) / len(
+                    lib_results
+                )
+                avg_memory = sum(r.memory_usage for r in lib_results) / len(lib_results)
 
-            median_creation_time = statistics.median(
-                r.creation_time_median for r in lib_results
-            )
-            median_add_time = statistics.median(r.add_time_median for r in lib_results)
-            median_hit_time = statistics.median(
-                r.lookup_hit_time_median for r in lib_results
-            )
-            median_miss_time = statistics.median(
-                r.lookup_miss_time_median for r in lib_results
-            )
-            median_memory = statistics.median(r.memory_usage for r in lib_results)
+                median_creation_time = statistics.median(
+                    r.creation_time_median for r in lib_results
+                )
+                median_add_time = statistics.median(r.add_time_median for r in lib_results)
+                median_hit_time = statistics.median(
+                    r.lookup_hit_time_median for r in lib_results
+                )
+                median_miss_time = statistics.median(
+                    r.lookup_miss_time_median for r in lib_results
+                )
+                median_memory = statistics.median(r.memory_usage for r in lib_results)
 
-            print(f"\n{library}:")
-            print(
-                f"  Average creation time: {avg_creation_time:.6f}s (median: {median_creation_time:.6f}s)"
-            )
-            print(
-                f"  Average add time: {avg_add_time:.4f}s (median: {median_add_time:.4f}s)"
-            )
-            print(
-                f"  Average hit time: {avg_hit_time:.6f}s (median: {median_hit_time:.6f}s)"
-            )
-            print(
-                f"  Average miss time: {avg_miss_time:.6f}s (median: {median_miss_time:.6f}s)"
-            )
-            print(
-                f"  Average memory usage: {avg_memory:.1f}MB (median: {median_memory:.1f}MB)"
-            )
+                print(f"\n{library} ({data_type}):")
+                print(
+                    f"  Average creation time: {avg_creation_time:.6f}s (median: {median_creation_time:.6f}s)"
+                )
+                print(
+                    f"  Average add time: {avg_add_time:.4f}s (median: {median_add_time:.4f}s)"
+                )
+                print(
+                    f"  Average hit time: {avg_hit_time:.6f}s (median: {median_hit_time:.6f}s)"
+                )
+                print(
+                    f"  Average miss time: {avg_miss_time:.6f}s (median: {median_miss_time:.6f}s)"
+                )
+                print(
+                    f"  Average memory usage: {avg_memory:.1f}MB (median: {median_memory:.1f}MB)"
+                )
 
 
 @click.command()
@@ -566,46 +605,59 @@ def main(
         random_seed=seed,
     )
 
-    # Generate test data
+    # Generate test data for both bytes and strings
     max_items = max(items_list)
-    logger.info(f"Generating {max_items * 2} test bytes...")
+    logger.info(f"Generating {max_items * 2} test items for both bytes and strings...")
 
-    # Generate items to add to filters
-    test_items = generate_random_bytes(max_items, config.item_length, seed)
+    # Generate items to add to filters (both bytes and strings)
+    test_items_bytes = generate_random_bytes(max_items, config.item_length, seed)
+    test_items_strings = generate_random_strings(max_items, config.item_length, seed)
 
-    # Generate separate items for lookup tests (to ensure we have items not in the filter)
-    lookup_items = generate_random_bytes(
-        config.num_lookups, config.item_length, seed + 1
-    )
+    # Generate separate items for lookup tests
+    lookup_items_bytes = generate_random_bytes(config.num_lookups, config.item_length, seed + 1)
+    lookup_items_strings = generate_random_strings(config.num_lookups, config.item_length, seed + 1)
+
+    # Define data types to test
+    data_types = ["bytes", "string"]
 
     # Run benchmarks
     all_results = []
     total_tests = (
-        len(test_libraries) * len(capacity_list) * len(fpr_list) * len(items_list)
+        len(test_libraries) * len(data_types) * len(capacity_list) * len(fpr_list) * len(items_list)
     )
     current_test = 0
 
     for library in test_libraries:
-        for capacity in capacity_list:
-            for false_positive_rate in fpr_list:
-                for num_items in items_list:
-                    current_test += 1
-                    logger.info(f"Progress: {current_test}/{total_tests}")
+        for data_type in data_types:
+            # Select appropriate test data based on data type
+            if data_type == "bytes":
+                test_items = test_items_bytes
+                lookup_items = lookup_items_bytes
+            else:
+                test_items = test_items_strings
+                lookup_items = lookup_items_strings
 
-                    try:
-                        result = benchmark_bloom_filter(
-                            library=library,
-                            capacity=capacity,
-                            false_positive_rate=false_positive_rate,
-                            test_items=test_items[:num_items],
-                            lookup_items=lookup_items,
-                            config=config,
-                        )
-                        all_results.append(result)
+            for capacity in capacity_list:
+                for false_positive_rate in fpr_list:
+                    for num_items in items_list:
+                        current_test += 1
+                        logger.info(f"Progress: {current_test}/{total_tests}")
 
-                    except Exception as e:
-                        logger.error(f"Error benchmarking {library}: {e}")
-                        continue
+                        try:
+                            result = benchmark_bloom_filter(
+                                library=library,
+                                data_type=data_type,
+                                capacity=capacity,
+                                false_positive_rate=false_positive_rate,
+                                test_items=test_items[:num_items],
+                                lookup_items=lookup_items,
+                                config=config,
+                            )
+                            all_results.append(result)
+
+                        except Exception as e:
+                            logger.error(f"Error benchmarking {library} ({data_type}): {e}")
+                            continue
 
     # Print results
     print_benchmark_results(all_results)
