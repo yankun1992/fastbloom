@@ -211,6 +211,8 @@ assert_eq!(bloom.contains(b"helloworld"), true);
 
 # benchmark
 
+For detailed performance comparisons between fastbloom-rs and other Python bloom filter libraries, see the [library comparison benchmark](benches/lib_comparison/). This benchmark compares fastbloom-rs against pyprobables and pybloomfilter3 across various configurations and provides comprehensive performance metrics.
+
 ## computer info
 
 | CPU                                    | Memory | OS         |
