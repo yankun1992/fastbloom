@@ -386,7 +386,9 @@ def get_available_libraries() -> List[str]:
     return libraries
 
 
-def print_benchmark_results(results: List[BenchmarkResult], results_file: str = None) -> None:
+def print_benchmark_results(
+    results: List[BenchmarkResult], results_file: str = None
+) -> None:
     """Print formatted benchmark results and save to log and file."""
 
     if not results:
@@ -409,7 +411,9 @@ def print_benchmark_results(results: List[BenchmarkResult], results_file: str = 
     output_buffer.write("=" * 120 + "\n")
 
     for (capacity, fpr, num_items), config_results in configs.items():
-        output_buffer.write(f"\nConfiguration: Capacity={capacity:,}, FPR={fpr}, Items={num_items:,}\n")
+        output_buffer.write(
+            f"\nConfiguration: Capacity={capacity:,}, FPR={fpr}, Items={num_items:,}\n"
+        )
         output_buffer.write("-" * 130 + "\n")
 
         # Table header
@@ -509,7 +513,7 @@ def print_benchmark_results(results: List[BenchmarkResult], results_file: str = 
 
     # Log the results - split into lines to avoid overwhelming single log entry
     logger.info("=== BENCHMARK RESULTS START ===")
-    for line in output_text.strip().split('\n'):
+    for line in output_text.strip().split("\n"):
         if line.strip():  # Only log non-empty lines
             logger.info(line)
     logger.info("=== BENCHMARK RESULTS END ===")
@@ -518,9 +522,11 @@ def print_benchmark_results(results: List[BenchmarkResult], results_file: str = 
     if results_file:
         try:
             results_path = Path(results_file)
-            with open(results_path, 'w', encoding='utf-8') as f:
+            with open(results_path, "w", encoding="utf-8") as f:
                 f.write(f"# Bloom Filter Benchmark Results\n")
-                f.write(f"# Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(
+                    f"# Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                )
                 f.write(f"# This file was created with assistance from aider.chat\n\n")
                 f.write(output_text)
             logger.info(f"Benchmark results saved to: {results_path.absolute()}")
