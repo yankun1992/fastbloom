@@ -477,15 +477,15 @@ def main(
     # Configure logging
     logger.remove()
     log_level = "DEBUG" if verbose else "INFO"
-    
+
     # Add console logging
     logger.add(lambda msg: click.echo(msg, err=True), level=log_level)
-    
+
     # Add file logging with default filename based on timestamp
     if log_file is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         log_file = f"benchmark_{timestamp}.log"
-    
+
     log_file_path = Path(log_file)
     logger.add(
         log_file_path,
@@ -494,7 +494,7 @@ def main(
         rotation="10 MB",
         retention="7 days",
     )
-    
+
     logger.info(f"Logging to file: {log_file_path.absolute()}")
 
     # Parse parameters
