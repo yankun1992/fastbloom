@@ -90,6 +90,7 @@ class BenchmarkResult:
     """Results from a single benchmark run."""
 
     library: str
+    library_version: str
     capacity: int
     false_positive_rate: float
     num_items: int
@@ -287,6 +288,7 @@ def benchmark_bloom_filter(
 
     return BenchmarkResult(
         library=library,
+        library_version=get_library_version(library),
         capacity=capacity,
         false_positive_rate=false_positive_rate,
         num_items=len(test_items),
@@ -302,6 +304,24 @@ def benchmark_bloom_filter(
         false_positive_count=avg_false_positives,
         total_lookups=config.num_lookups,
     )
+
+
+def get_library_version(library: str) -> str:
+    """Get version string for a bloom filter library."""
+    try:
+        if library == "pyprobables":
+            import probables
+            return getattr(probables, '__version__', 'unknown')
+        elif library == "fastbloom-rs":
+            import fastbloom_rs
+            return getattr(fastbloom_rs, '__version__', 'unknown')
+        elif library == "pybloomfilter3":
+            import pybloomfilter
+            return getattr(pybloomfilter, '__version__', 'unknown')
+        else:
+            return 'unknown'
+    except Exception:
+        return 'unknown'
 
 
 def get_available_libraries() -> List[str]:
