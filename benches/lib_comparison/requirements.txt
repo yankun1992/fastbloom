@@ -1,0 +1,9 @@
+# Core dependencies for the bloom filter benchmark
+click
+loguru
+psutil
+
+# Bloom filter libraries (all optional - benchmark will skip missing ones)
+pyprobables
+fastbloom-rs
+pybloomfilter3
