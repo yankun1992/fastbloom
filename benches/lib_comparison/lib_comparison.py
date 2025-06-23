@@ -17,6 +17,7 @@ import gc
 import psutil
 import os
 import statistics
+import io
 from datetime import datetime
 from typing import List, Dict, Any, Tuple, Protocol
 from dataclasses import dataclass
@@ -385,12 +386,15 @@ def get_available_libraries() -> List[str]:
     return libraries
 
 
-def print_benchmark_results(results: List[BenchmarkResult]) -> None:
-    """Print formatted benchmark results."""
+def print_benchmark_results(results: List[BenchmarkResult], results_file: str = None) -> None:
+    """Print formatted benchmark results and save to log and file."""
 
     if not results:
         logger.error("No benchmark results to display")
         return
+
+    # Capture all output in a string buffer to write to multiple destinations
+    output_buffer = io.StringIO()
 
     # Group results by configuration for easier comparison
     configs = {}
@@ -400,22 +404,22 @@ def print_benchmark_results(results: List[BenchmarkResult]) -> None:
             configs[key] = []
         configs[key].append(result)
 
-    print("\n" + "=" * 120)
-    print("BLOOM FILTER PERFORMANCE BENCHMARK RESULTS")
-    print("=" * 120)
+    output_buffer.write("\n" + "=" * 120 + "\n")
+    output_buffer.write("BLOOM FILTER PERFORMANCE BENCHMARK RESULTS\n")
+    output_buffer.write("=" * 120 + "\n")
 
     for (capacity, fpr, num_items), config_results in configs.items():
-        print(f"\nConfiguration: Capacity={capacity:,}, FPR={fpr}, Items={num_items:,}")
-        print("-" * 130)
+        output_buffer.write(f"\nConfiguration: Capacity={capacity:,}, FPR={fpr}, Items={num_items:,}\n")
+        output_buffer.write("-" * 130 + "\n")
 
         # Table header
-        print(
-            f"{'Library':<15} {'Data Type':<10} {'Create Time':<12} {'Add Time':<12} {'Hit Time':<12} {'Miss Time':<12} {'Memory':<10} {'FP Rate':<10}"
+        output_buffer.write(
+            f"{'Library':<15} {'Data Type':<10} {'Create Time':<12} {'Add Time':<12} {'Hit Time':<12} {'Miss Time':<12} {'Memory':<10} {'FP Rate':<10}\n"
         )
-        print(
-            f"{'':.<15} {'':.<10} {'(seconds)':<12} {'(seconds)':<12} {'(seconds)':<12} {'(seconds)':<12} {'(MB)':<10} {'(actual)':<10}"
+        output_buffer.write(
+            f"{'':.<15} {'':.<10} {'(seconds)':<12} {'(seconds)':<12} {'(seconds)':<12} {'(seconds)':<12} {'(MB)':<10} {'(actual)':<10}\n"
         )
-        print("-" * 130)
+        output_buffer.write("-" * 130 + "\n")
 
         # Sort by library, then data type, then total time
         config_results.sort(
@@ -429,7 +433,7 @@ def print_benchmark_results(results: List[BenchmarkResult]) -> None:
                 else 0
             )
 
-            print(
+            output_buffer.write(
                 f"{result.library:<15} "
                 f"{result.data_type:<10} "
                 f"{result.creation_time:<12.6f} "
@@ -437,13 +441,13 @@ def print_benchmark_results(results: List[BenchmarkResult]) -> None:
                 f"{result.lookup_hit_time:<12.6f} "
                 f"{result.lookup_miss_time:<12.6f} "
                 f"{result.memory_usage:<10.1f} "
-                f"{actual_fpr:<10.4f}"
+                f"{actual_fpr:<10.4f}\n"
             )
 
     # Summary statistics
-    print("\n" + "=" * 120)
-    print("SUMMARY")
-    print("=" * 120)
+    output_buffer.write("\n" + "=" * 120 + "\n")
+    output_buffer.write("SUMMARY\n")
+    output_buffer.write("=" * 120 + "\n")
 
     for library in sorted(set(r.library for r in results)):
         for data_type in sorted(
@@ -479,22 +483,49 @@ def print_benchmark_results(results: List[BenchmarkResult]) -> None:
                 )
                 median_memory = statistics.median(r.memory_usage for r in lib_results)
 
-                print(f"\n{library} ({data_type}):")
-                print(
-                    f"  Average creation time: {avg_creation_time:.6f}s (median: {median_creation_time:.6f}s)"
+                output_buffer.write(f"\n{library} ({data_type}):\n")
+                output_buffer.write(
+                    f"  Average creation time: {avg_creation_time:.6f}s (median: {median_creation_time:.6f}s)\n"
                 )
-                print(
-                    f"  Average add time: {avg_add_time:.4f}s (median: {median_add_time:.4f}s)"
+                output_buffer.write(
+                    f"  Average add time: {avg_add_time:.4f}s (median: {median_add_time:.4f}s)\n"
                 )
-                print(
-                    f"  Average hit time: {avg_hit_time:.6f}s (median: {median_hit_time:.6f}s)"
+                output_buffer.write(
+                    f"  Average hit time: {avg_hit_time:.6f}s (median: {median_hit_time:.6f}s)\n"
                 )
-                print(
-                    f"  Average miss time: {avg_miss_time:.6f}s (median: {median_miss_time:.6f}s)"
+                output_buffer.write(
+                    f"  Average miss time: {avg_miss_time:.6f}s (median: {median_miss_time:.6f}s)\n"
                 )
-                print(
-                    f"  Average memory usage: {avg_memory:.1f}MB (median: {median_memory:.1f}MB)"
+                output_buffer.write(
+                    f"  Average memory usage: {avg_memory:.1f}MB (median: {median_memory:.1f}MB)\n"
                 )
+
+    # Get the complete output string
+    output_text = output_buffer.getvalue()
+    output_buffer.close()
+
+    # Print to console (preserving original behavior)
+    print(output_text, end="")
+
+    # Log the results - split into lines to avoid overwhelming single log entry
+    logger.info("=== BENCHMARK RESULTS START ===")
+    for line in output_text.strip().split('\n'):
+        if line.strip():  # Only log non-empty lines
+            logger.info(line)
+    logger.info("=== BENCHMARK RESULTS END ===")
+
+    # Save to results file if specified
+    if results_file:
+        try:
+            results_path = Path(results_file)
+            with open(results_path, 'w', encoding='utf-8') as f:
+                f.write(f"# Bloom Filter Benchmark Results\n")
+                f.write(f"# Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"# This file was created with assistance from aider.chat\n\n")
+                f.write(output_text)
+            logger.info(f"Benchmark results saved to: {results_path.absolute()}")
+        except Exception as e:
+            logger.error(f"Failed to save results to file {results_file}: {e}")
 
 
 @click.command()
@@ -561,8 +592,8 @@ def main(
     logger.add(lambda msg: click.echo(msg, err=True), level=log_level)
 
     # Add file logging with default filename based on timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     if log_file is None:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         log_file = f"benchmark_{timestamp}.log"
 
     log_file_path = Path(log_file)
@@ -575,6 +606,11 @@ def main(
     )
 
     logger.info(f"Logging to file: {log_file_path.absolute()}")
+
+    # Generate results file path - use same timestamp for consistency
+    results_file = f"benchmark_results_{timestamp}.txt"
+    results_file_path = Path(results_file)
+    logger.info(f"Results will be saved to: {results_file_path.absolute()}")
 
     # Parse parameters
     try:
@@ -686,8 +722,8 @@ def main(
                             )
                             continue
 
-    # Print results
-    print_benchmark_results(all_results)
+    # Print results and save to file
+    print_benchmark_results(all_results, results_file)
 
     logger.info("Benchmark complete!")
 
