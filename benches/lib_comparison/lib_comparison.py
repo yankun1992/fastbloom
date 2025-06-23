@@ -373,7 +373,7 @@ def print_benchmark_results(results: List[BenchmarkResult]) -> None:
     print("SUMMARY")
     print("=" * 100)
 
-    for library in set(r.library for r in results):
+    for library in sorted(set(r.library for r in results)):
         lib_results = [r for r in results if r.library == library]
         if lib_results:
             avg_creation_time = sum(r.creation_time for r in lib_results) / len(
