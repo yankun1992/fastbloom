@@ -3,6 +3,8 @@
 from fastbloom_rs import BloomFilter, FilterBuilder
 import os
 
+import pytest
+
 
 def test_bloom_builder():
     bloom = BloomFilter(100_000_000, 0.01)
@@ -201,3 +203,15 @@ def test_save_load_file():
     assert not bloom.contains('world')
 
     os.remove('fst.bloom')
+
+def test_load_fails():
+    with pytest.raises(FileNotFoundError):
+        BloomFilter.from_file_with_hashes('doesnotexists.bloom')
+
+    with open('fst.bloom', 'xb') as f:
+        try:
+            f.write(b'\00\00')
+            with pytest.raises(OSError):
+                BloomFilter.from_file_with_hashes('fst.bloom')
+        finally:
+            os.remove('fst.bloom')

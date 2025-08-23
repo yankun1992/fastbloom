@@ -1,7 +1,6 @@
 use std::cmp::min;
 use std::fs::{File, OpenOptions};
-use std::fs;
-use std::io::{Write, Read};
+use std::io::{self, Write, Read};
 use std::ptr::slice_from_raw_parts;
 
 use xxhash_rust::xxh3::xxh3_64_with_seed;
@@ -164,33 +163,37 @@ impl BloomFilter {
 
     /// Build a Bloom filter from file with first four bytes is hashes which is encode by big-endian.
     /// The remaining is underlying byte vector of the Bloom filter.
-    pub fn from_file_with_hashes(path: &str) -> Self {
-        let mut f = File::open(path).unwrap();
-        let len = f.metadata().unwrap().len() - 4;
+    pub fn from_file_with_hashes(path: &str) -> io::Result<Self> {
+        let mut f = File::open(path)?;
         let mut hash = [0; 4];
-        f.read_exact(&mut hash).unwrap();
+        let metadata = f.metadata()?;
+        if metadata.len() < 4 {
+            return Err(io::Error::other("File is too short"));
+        }
+        let len = metadata.len() - 4;
+        f.read_exact(&mut hash)?;
         let hashes = u32::from_be_bytes(hash);
 
         let mut config =
             FilterBuilder::from_size_and_hashes((len * 8) as u64, hashes);
         config.complete();
 
-        let bit_set = BloomBitVec::from_file(&mut f, 4, len);
+        let bit_set = BloomBitVec::from_file(&mut f, 4, len)?;
         
-        BloomFilter { config, bit_set }
+        Ok(BloomFilter { config, bit_set })
     }
 
     /// Build a Bloom filter from file. The content is underlying byte vector of the Bloom filter.
-    pub fn from_file(path: &str, hashes: u32) -> Self {
-        let mut f = File::open(path).unwrap();
-        let len = f.metadata().unwrap().len();
+    pub fn from_file(path: &str, hashes: u32) -> io::Result<Self> {
+        let mut f = File::open(path)?;
+        let len = f.metadata()?.len();
         let mut config =
             FilterBuilder::from_size_and_hashes((len * 8) as u64, hashes);
         config.complete();
 
-        let bit_set = BloomBitVec::from_file(&mut f, 0, len);
+        let bit_set = BloomBitVec::from_file(&mut f, 0, len)?;
         
-        BloomFilter { config, bit_set }
+        Ok(BloomFilter { config, bit_set })
     }
 
     /// Build a Bloom filter form `&[u8]`.
@@ -200,7 +203,7 @@ impl BloomFilter {
     /// ```rust
     /// use fastbloom_rs::BloomFilter;
     /// let mut array = vec![0u8; 4096];
-    /// let bloom = BloomFilter::from_u8_array(array.as_bytes(), 4);
+    /// let bloom = BloomFilter::from_u8_array(&array, 4);
     /// ```
     pub fn from_u8_array(array: &[u8], hashes: u32) -> Self {
         let mut config =
@@ -229,7 +232,7 @@ impl BloomFilter {
     /// ```rust
     /// use fastbloom_rs::BloomFilter;
     /// let mut array = vec![0u16; 2048];
-    /// let bloom = BloomFilter::from_u16_array(array.as_bytes(), 4);
+    /// let bloom = BloomFilter::from_u16_array(&array, 4);
     /// ```
     pub fn from_u16_array(array: &[u16], hashes: u32) -> Self {
         let mut config =
@@ -259,7 +262,7 @@ impl BloomFilter {
     /// ```rust
     /// use fastbloom_rs::BloomFilter;
     /// let mut array = vec![0u32; 1024];
-    /// let bloom = BloomFilter::from_u32_array(array.as_bytes(), 4);
+    /// let bloom = BloomFilter::from_u32_array(&array, 4);
     /// ```
     pub fn from_u32_array(array: &[u32], hashes: u32) -> Self {
         let mut config =
@@ -288,7 +291,7 @@ impl BloomFilter {
     /// ```rust
     /// use fastbloom_rs::BloomFilter;
     /// let mut array = vec![0u64; 512];
-    /// let bloom = BloomFilter::from_u32_array(array.as_bytes(), 4);
+    /// let bloom = BloomFilter::from_u64_array(&array, 4);
     /// ```
     pub fn from_u64_array(array: &[u64], hashes: u32) -> Self {
         let mut config =
@@ -326,22 +329,22 @@ impl BloomFilter {
 
     /// Save the bloom filter to file, and the first four bytes is hashes with 
     /// big-endian, and the remaining bytes is underlying byte vector of the Bloom filter.
-    pub fn save_to_file_with_hashes(&mut self, path: &str) {
-        let mut file = File::create(path).unwrap();
+    pub fn save_to_file_with_hashes(&mut self, path: &str) -> io::Result<()> {
+        let mut file = File::create(path)?;
         let hash = self.hashes().to_be_bytes();
-        file.write_all(&hash).unwrap();
+        file.write_all(&hash)?;
 
         let bytes = self.get_u8_array();
-        let mut file = OpenOptions::new().append(true).open(path).unwrap();
-        file.write_all(bytes).unwrap();
+        let mut file = OpenOptions::new().append(true).open(path)?;
+        file.write_all(bytes)
     }
 
     /// Save the bloom filter to file, and the content of the file is underlying byte 
     /// vector of the Bloom filter.
-    pub fn save_to_file(&mut self, path: &str) {
-        let mut file = File::create(path).unwrap();
+    pub fn save_to_file(&mut self, path: &str) -> io::Result<()> {
+        let mut file = File::create(path)?;
         let bytes = self.get_u8_array();
-        file.write_all(bytes).unwrap();
+        file.write_all(bytes)
     }
 
     /// Return the underlying byte vector of the Bloom filter.
@@ -836,12 +839,12 @@ fn bloom_save_and_load_file_hashes() {
 
         bloom.add(b"hello");
         assert_eq!(bloom.contains(b"hello"), true);
-        bloom.save_to_file_with_hashes("hello.bloom");
+        bloom.save_to_file_with_hashes("hello.bloom").unwrap();
     }
     
 
-    let bloom2 = BloomFilter::from_file_with_hashes("hello.bloom");
-    fs::remove_file("hello.bloom").unwrap();
+    let bloom2 = BloomFilter::from_file_with_hashes("hello.bloom").unwrap();
+    std::fs::remove_file("hello.bloom").unwrap();
 
     assert_eq!(bloom2.contains(b"hello"), true);
     assert_eq!(bloom2.contains(b"world"), false);
@@ -860,11 +863,11 @@ fn bloom_save_and_load_file() {
 
         hashes = bloom.hashes();
         
-        bloom.save_to_file("no_hashes.bloom");
+        bloom.save_to_file("no_hashes.bloom").unwrap();
     }
 
-    let bloom2 = BloomFilter::from_file("no_hashes.bloom", hashes);
-    fs::remove_file("no_hashes.bloom").unwrap();
+    let bloom2 = BloomFilter::from_file("no_hashes.bloom", hashes).unwrap();
+    std::fs::remove_file("no_hashes.bloom").unwrap();
 
     assert_eq!(bloom2.contains(b"hello"), true);
     assert_eq!(bloom2.contains(b"world"), false);

@@ -1,5 +1,4 @@
-use core::slice;
-use std::{fs::File, io::{Read, Seek}};
+use std::{fs::File, io::{self, Read, Seek}};
 
 use crate::builder::SUFFIX;
 
@@ -33,29 +32,30 @@ impl BloomBitVec {
             nbits: (slots * get_usize_len()) as u64,
         }
     }
+
+    fn as_u8_slice(inp: &mut [usize]) -> &mut [u8] {
+        unsafe {
+            std::slice::from_raw_parts_mut(
+                inp.as_mut_ptr() as *mut u8,
+                std::mem::size_of_val(inp)
+            )
+        }
+    }
     
-    pub fn from_file(file: &mut File, seek: u64, bytes_len: u64) -> Self {
-        #[cfg(target_pointer_width = "64")]
-            let length = bytes_len / 8;
-        #[cfg(target_pointer_width = "32")]
-            let length = bytes_len / 4;
-        
+    pub fn from_file(file: &mut File, seek: u64, bytes_len: u64) -> io::Result<Self> {
+        let length: u64 = bytes_len / TryInto::<u64>::try_into(std::mem::size_of::<usize>()).unwrap();
+
         let nbits = bytes_len * 8;
 
         let mut storage = vec![0usize; length.try_into().unwrap()];
-        let ptr = storage.as_mut_ptr();
-        let buf = ptr as *mut u8;
-        let buf = unsafe {
-            slice::from_raw_parts_mut(buf, bytes_len.try_into().unwrap())
-        };
+        let buf = Self::as_u8_slice(&mut storage);
+        file.seek(std::io::SeekFrom::Start(seek))?;
+        file.read_exact(buf)?;
 
-        file.seek(std::io::SeekFrom::Start(seek)).unwrap();
-        file.read_exact(buf).unwrap();
-
-        BloomBitVec {
+        Ok(BloomBitVec {
             storage,
             nbits: nbits.try_into().unwrap()
-        }
+        })
     }
 
     #[inline]
