@@ -164,12 +164,12 @@ impl PyBloomFilter {
         Ok(Vec::from(self.bloomfilter.get_u32_array()))
     }
 
-    pub fn save_to_file_with_hashes(&mut self, path: &str) {
-        self.bloomfilter.save_to_file_with_hashes(path);
+    pub fn save_to_file_with_hashes(&mut self, path: &str) -> PyResult<()> {
+        Ok(self.bloomfilter.save_to_file_with_hashes(path)?)
     }
 
-    pub fn save_to_file(&mut self, path: &str) {
-        self.bloomfilter.save_to_file(path);
+    pub fn save_to_file(&mut self, path: &str) -> PyResult<()> {
+        Ok(self.bloomfilter.save_to_file(path)?)
     }
 
     pub fn clear(&mut self) {
@@ -217,12 +217,12 @@ impl PyBloomFilter {
 
     #[staticmethod]
     pub fn from_file_with_hashes(path: &str) -> PyResult<Self> {
-        Ok(PyBloomFilter { bloomfilter: BloomFilter::from_file_with_hashes(path) })
+        Ok(PyBloomFilter { bloomfilter: BloomFilter::from_file_with_hashes(path)? })
     }
 
     #[staticmethod]
     pub fn from_file(path: &str, hashes: u32) -> PyResult<Self> {
-        Ok(PyBloomFilter { bloomfilter: BloomFilter::from_file(path, hashes) })
+        Ok(PyBloomFilter { bloomfilter: BloomFilter::from_file(path, hashes)? })
     }
 }
 
